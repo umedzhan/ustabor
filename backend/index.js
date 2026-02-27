@@ -4,7 +4,12 @@ const cors = require('cors');
 require('dotenv').config();
 
 const Category = require('./models/Category');
-const Professional = require('./models/Professional');
+const User = require('./models/User');
+const VendorProfile = require('./models/VendorProfile');
+const Order = require('./models/Order');
+
+const authMiddleware = require('./middleware/auth');
+require('./bot/index'); // Initialize Telegram Bot
 
 const app = express();
 app.use(cors());
@@ -27,8 +32,40 @@ app.get('/api/categories', async (req, res) => {
     }
 });
 
-// 2. Get all professionals (optionally filter by category and search)
-app.get('/api/professionals', async (req, res) => {
+// 2. Auth with Telegram initData
+app.post('/api/auth/telegram', async (req, res) => {
+    const { initData, user: telegramUser } = req.body;
+
+    // In production we should strictly validate initData.
+    // We'll skip strict failure if BOT_TOKEN isn't set yet during dev.
+    const isValid = authMiddleware.validateInitData(initData);
+    if (!isValid && process.env.BOT_TOKEN) {
+        return res.status(401).json({ error: 'Invalid initData' });
+    }
+
+    try {
+        if (!telegramUser || !telegramUser.id) {
+            return res.status(400).json({ error: 'Telegram user data missing' });
+        }
+
+        let user = await User.findOne({ telegramId: telegramUser.id.toString() });
+        if (!user) {
+            user = new User({
+                telegramId: telegramUser.id.toString(),
+                name: telegramUser.first_name + (telegramUser.last_name ? ' ' + telegramUser.last_name : '')
+            });
+            await user.save();
+        }
+
+        const token = authMiddleware.generateToken(user);
+        res.json({ token, user });
+    } catch (err) {
+        res.status(500).json({ error: 'Auth failed', details: err.message });
+    }
+});
+
+// 3. Get all vendors
+app.get('/api/vendors', async (req, res) => {
     try {
         const { categoryId, search } = req.query;
         let query = {};
@@ -36,31 +73,29 @@ app.get('/api/professionals', async (req, res) => {
             query.category = categoryId;
         }
 
-        let professionals = await Professional.find(query).populate('category', 'name icon');
+        let vendors = await VendorProfile.find(query)
+            .populate('category', 'name icon')
+            .populate('userId', 'name phone');
 
-        if (search) {
-            const lowerSearch = search.toLowerCase();
-            professionals = professionals.filter(pro =>
-                pro.name.toLowerCase().includes(lowerSearch)
-            );
-        }
-
-        res.json(professionals);
+        res.json(vendors);
     } catch (err) {
-        res.status(500).json({ error: 'Server error retrieving professionals' });
+        res.status(500).json({ error: 'Server error retrieving vendors' });
     }
 });
 
-// 3. Get a single professional by ID
-app.get('/api/professionals/:id', async (req, res) => {
+// 4. Get a single vendor by ID
+app.get('/api/vendors/:id', async (req, res) => {
     try {
-        const professional = await Professional.findById(req.params.id).populate('category', 'name icon');
-        if (!professional) {
-            return res.status(404).json({ error: 'Professional not found' });
+        const vendor = await VendorProfile.findById(req.params.id)
+            .populate('category', 'name icon')
+            .populate('userId', 'name phone');
+
+        if (!vendor) {
+            return res.status(404).json({ error: 'Vendor not found' });
         }
-        res.json(professional);
+        res.json(vendor);
     } catch (err) {
-        res.status(500).json({ error: 'Server error retrieving professional details' });
+        res.status(500).json({ error: 'Server error retrieving vendor details' });
     }
 });
 
@@ -75,23 +110,20 @@ app.post('/api/admin/login', (req, res) => {
 });
 
 // Middleware to verify admin token
-const verifyAdmin = (req, res, next) => {
-    const authHeader = req.headers.authorization;
-    if (authHeader === 'Bearer ustabor-secure-token-123') {
-        next();
-    } else {
-        res.status(403).json({ error: 'Ruxsat etilmagan' });
-    }
-};
+const verifyAdmin = authMiddleware.verifyAdmin;
 
-// 4. Create a new professional
-app.post('/api/professionals', verifyAdmin, async (req, res) => {
+// 5. Create a new vendor (Admin or Vendor registration)
+app.post('/api/vendors', authMiddleware.verifyToken, async (req, res) => {
     try {
-        const newProfessional = new Professional(req.body);
-        const savedProfessional = await newProfessional.save();
-        res.status(201).json(savedProfessional);
+        const newVendor = new VendorProfile({ ...req.body, userId: req.user.id });
+        const savedVendor = await newVendor.save();
+
+        // Update user role to vendor
+        await User.findByIdAndUpdate(req.user.id, { role: 'vendor' });
+
+        res.status(201).json(savedVendor);
     } catch (err) {
-        res.status(500).json({ error: 'Server error creating professional', details: err.message });
+        res.status(500).json({ error: 'Server error creating vendor', details: err.message });
     }
 });
 

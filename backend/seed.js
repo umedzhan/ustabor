@@ -1,6 +1,7 @@
 const mongoose = require('mongoose');
 const Category = require('./models/Category');
-const Professional = require('./models/Professional');
+const User = require('./models/User');
+const VendorProfile = require('./models/VendorProfile');
 
 mongoose.connect('mongodb://127.0.0.1:27017/ustabor').then(() => console.log('MongoDB connected for seeding'))
     .catch(err => {
@@ -12,7 +13,8 @@ const seedDatabase = async () => {
     try {
         // Clear existing data
         await Category.deleteMany();
-        await Professional.deleteMany();
+        await User.deleteMany();
+        await VendorProfile.deleteMany();
 
         // 1. Seed Categories
         const categoriesData = [
@@ -89,8 +91,29 @@ const seedDatabase = async () => {
             }
         ];
 
-        const insertedProfessionals = await Professional.insertMany(professionalsData);
-        console.log(`${insertedProfessionals.length} professionals seeded.`);
+        for (let i = 0; i < professionalsData.length; i++) {
+            const prof = professionalsData[i];
+            const user = new User({
+                telegramId: 'dummy_vendor_' + i,
+                name: prof.name,
+                role: 'vendor'
+            });
+            await user.save();
+
+            const vendorProfile = new VendorProfile({
+                userId: user._id,
+                category: prof.category,
+                rating: prof.rating,
+                reviewCount: prof.reviewCount,
+                experienceYears: prof.experienceYears,
+                location: { type: 'Point', coordinates: [69.2401, 41.2995] }, // Dummy coordinates for Tashkent
+                services: prof.services.map(s => ({ name: s, price: prof.hourlyRate || 50000 })),
+                aboutText: prof.aboutText,
+                portfolio: [prof.imageUrl]
+            });
+            await vendorProfile.save();
+        }
+        console.log(`${professionalsData.length} vendors seeded.`);
 
     } catch (error) {
         console.error('Seeding error:', error);

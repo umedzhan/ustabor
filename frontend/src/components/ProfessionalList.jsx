@@ -12,7 +12,7 @@ const ProfessionalList = ({ categoryFilter, searchQuery }) => {
         const fetchPros = async () => {
             setLoading(true);
             try {
-                let url = `${API_URL}/professionals?`;
+                let url = `${API_URL}/vendors?`;
                 if (categoryFilter) url += `categoryId=${categoryFilter}&`;
                 if (searchQuery) url += `search=${encodeURIComponent(searchQuery)}`;
 
@@ -43,12 +43,16 @@ const ProfessionalList = ({ categoryFilter, searchQuery }) => {
 
             <div className="grid grid-cols-2 gap-3 pb-8">
                 {professionals.map((pro) => (
-                    <Link to={`/professional/${pro._id}`} key={pro._id} className="flex flex-col border border-gray-100 rounded-2xl overflow-hidden hover:shadow-md transition-shadow">
-                        <div className="h-40 w-full overflow-hidden">
-                            <img src={pro.imageUrl} alt={pro.name} className="w-full h-full object-cover" />
+                    <Link to={`/vendor/${pro._id}`} key={pro._id} className="flex flex-col border border-gray-100 rounded-2xl overflow-hidden hover:shadow-md transition-shadow">
+                        <div className="h-40 w-full overflow-hidden bg-gray-100 flex items-center justify-center">
+                            {pro.portfolio && pro.portfolio.length > 0 ? (
+                                <img src={pro.portfolio[0]} alt={pro.userId?.name} className="w-full h-full object-cover" />
+                            ) : (
+                                <div className="text-gray-400 text-xs">No Image</div>
+                            )}
                         </div>
                         <div className="p-3 flex flex-col gap-1 bg-white">
-                            <h3 className="font-bold text-sm text-gray-800">{pro.name}</h3>
+                            <h3 className="font-bold text-sm text-gray-800">{pro.userId?.name}</h3>
                             <p className="text-xs text-gray-500">{pro.category?.name}</p>
 
                             <div className="flex items-center gap-1 mt-1">
@@ -58,7 +62,7 @@ const ProfessionalList = ({ categoryFilter, searchQuery }) => {
                             </div>
 
                             <p className="text-sm font-bold text-primary mt-1">
-                                {pro.hourlyRate.toLocaleString()} so'm
+                                {pro.services && pro.services[0] ? `${pro.services[0].price.toLocaleString()} so'm` : 'Kelishilgan'}
                             </p>
                         </div>
                     </Link>

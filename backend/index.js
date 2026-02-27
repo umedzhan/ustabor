@@ -131,6 +131,47 @@ app.post('/api/vendors', authMiddleware.verifyToken, async (req, res) => {
     }
 });
 
+// Vendor: Get specific vendor's profile
+app.get('/api/vendor/profile', authMiddleware.verifyToken, async (req, res) => {
+    try {
+        const vendor = await VendorProfile.findOne({ userId: req.user.id })
+            .populate('category', 'name icon');
+        if (!vendor) return res.status(404).json({ error: 'Vendor profile not found' });
+        res.json(vendor);
+    } catch (err) {
+        res.status(500).json({ error: 'Server error fetching vendor profile' });
+    }
+});
+
+// Vendor: Update specific vendor's profile
+app.put('/api/vendor/profile', authMiddleware.verifyToken, async (req, res) => {
+    try {
+        const updatedVendor = await VendorProfile.findOneAndUpdate(
+            { userId: req.user.id },
+            { $set: req.body },
+            { new: true, runValidators: true }
+        ).populate('category', 'name icon');
+
+        if (!updatedVendor) return res.status(404).json({ error: 'Vendor profile not found' });
+        res.json(updatedVendor);
+    } catch (err) {
+        res.status(500).json({ error: 'Server error updating vendor profile' });
+    }
+});
+
+// Vendor: Get vendor's orders
+app.get('/api/vendor/orders', authMiddleware.verifyToken, async (req, res) => {
+    try {
+        const vendor = await VendorProfile.findOne({ userId: req.user.id });
+        if (!vendor) return res.status(404).json({ error: 'Vendor profile not found' });
+
+        const orders = await Order.find({ vendorId: vendor._id }).sort({ createdAt: -1 });
+        res.json(orders);
+    } catch (err) {
+        res.status(500).json({ error: 'Server error fetching vendor orders' });
+    }
+});
+
 // 6. Create Order
 app.post('/api/orders', async (req, res) => {
     try {

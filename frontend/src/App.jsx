@@ -5,6 +5,7 @@ import OrderFlow from './pages/Client/OrderFlow';
 import Chat from './pages/Client/Chat';
 import Dashboard from './pages/Vendor/Dashboard';
 import VendorRegister from './pages/Vendor/Register';
+import ProfileSettings from './pages/Vendor/ProfileSettings';
 import Admin from './pages/Admin';
 import { useAuth } from './context/AuthContext';
 
@@ -38,7 +39,10 @@ function App() {
             user ? <VendorRegister /> : <Navigate to="/" />
           } />
           <Route path="/vendor/dashboard" element={
-            <Dashboard />
+            user && user.role === 'vendor' ? <Dashboard /> : <Navigate to="/vendor/register" />
+          } />
+          <Route path="/vendor/profile" element={
+            user && user.role === 'vendor' ? <ProfileSettings /> : <Navigate to="/" />
           } />
 
           {/* Admin Routes */}

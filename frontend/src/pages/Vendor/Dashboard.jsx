@@ -12,31 +12,23 @@ const Dashboard = () => {
     const [loading, setLoading] = useState(true);
 
     useEffect(() => {
-        // In a real app we'd fetch actual orders for this vendor
-        // axios.get(`${API_URL}/vendor/orders`).then(...)
+        const fetchDashboardData = async () => {
+            try {
+                const token = localStorage.getItem('token');
+                if (!token) return;
 
-        // Dummy data for presentation
-        setTimeout(() => {
-            setOrders([
-                {
-                    _id: '1',
-                    serviceDetails: { name: 'Rozetkalarni o\'rnatish', price: 50000 },
-                    client: { name: 'Sardor', phone: '+998 90 123 45 67' },
-                    appointmentTime: '2026-03-01T14:30:00.000Z',
-                    status: 'pending',
-                    location: { address: 'Yunusobod 19-kvartal, 45-uy' }
-                },
-                {
-                    _id: '2',
-                    serviceDetails: { name: 'Qisqa tutashuvni bartaraf etish', price: 150000 },
-                    client: { name: 'Aziza', phone: '+998 93 987 65 43' },
-                    appointmentTime: '2026-02-28T10:00:00.000Z',
-                    status: 'accepted',
-                    location: { address: 'Chilonzor 8-kvartal, 12-uy' }
-                }
-            ]);
-            setLoading(false);
-        }, 800);
+                const { data } = await axios.get(`${API_URL}/vendor/orders`, {
+                    headers: { Authorization: `Bearer ${token}` }
+                });
+                setOrders(data);
+            } catch (error) {
+                console.error("Error fetching orders:", error);
+            } finally {
+                setLoading(false);
+            }
+        };
+
+        fetchDashboardData();
     }, []);
 
     const getStatusBadge = (status) => {
@@ -116,13 +108,15 @@ const Dashboard = () => {
                                     </div>
 
                                     <div className="bg-gray-50 p-2.5 rounded-xl text-xs flex flex-col gap-1.5">
-                                        <div className="flex justify-between">
-                                            <span className="text-gray-500">Mijoz:</span>
-                                            <span className="font-medium text-gray-800">{order.client.name}</span>
-                                        </div>
+                                        {order.client && (
+                                            <div className="flex justify-between">
+                                                <span className="text-gray-500">Mijoz ID:</span>
+                                                <span className="font-medium text-gray-800">{order.clientId || 'Yashirin'}</span>
+                                            </div>
+                                        )}
                                         <div className="flex justify-between">
                                             <span className="text-gray-500">Manzil:</span>
-                                            <span className="font-medium text-gray-800 text-right max-w-[60%] truncate" title={order.location.address}>{order.location.address}</span>
+                                            <span className="font-medium text-gray-800 text-right max-w-[60%] truncate" title={order.location?.address}>{order.location?.address}</span>
                                         </div>
                                         <div className="flex justify-between mt-1 pt-1 border-t border-gray-200">
                                             <span className="text-gray-500">Narx:</span>
@@ -161,7 +155,7 @@ const Dashboard = () => {
                     <Wallet size={24} />
                     <span className="text-[10px] font-medium">Moliya</span>
                 </button>
-                <button className="flex flex-col items-center gap-1 p-2 text-gray-400 hover:text-gray-600 transition-colors">
+                <button onClick={() => navigate('/vendor/profile')} className="flex flex-col items-center gap-1 p-2 text-gray-400 hover:text-gray-600 transition-colors">
                     <Settings size={24} />
                     <span className="text-[10px] font-medium">Profil</span>
                 </button>

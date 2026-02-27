@@ -4,6 +4,7 @@ import ProfessionalProfile from './pages/ProfessionalProfile';
 import OrderFlow from './pages/Client/OrderFlow';
 import Chat from './pages/Client/Chat';
 import Dashboard from './pages/Vendor/Dashboard';
+import VendorRegister from './pages/Vendor/Register';
 import Admin from './pages/Admin';
 import { useAuth } from './context/AuthContext';
 
@@ -33,6 +34,9 @@ function App() {
           } />
 
           {/* Vendor Routes */}
+          <Route path="/vendor/register" element={
+            user ? <VendorRegister /> : <Navigate to="/" />
+          } />
           <Route path="/vendor/dashboard" element={
             <Dashboard />
           } />

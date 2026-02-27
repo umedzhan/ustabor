@@ -12,7 +12,11 @@ const authMiddleware = require('./middleware/auth');
 require('./bot/index'); // Initialize Telegram Bot
 
 const app = express();
-app.use(cors());
+app.use(cors({
+    origin: '*', // Yoki faqat ruxsat etilgan domenlarni yozish: ['https://ustabor.agrom24.uz', 'http://localhost:5173']
+    methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+    allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With', 'Accept']
+}));
 app.use(express.json());
 
 // Connect to MongoDB

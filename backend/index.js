@@ -131,5 +131,29 @@ app.post('/api/vendors', authMiddleware.verifyToken, async (req, res) => {
     }
 });
 
+// 6. Create Order
+app.post('/api/orders', async (req, res) => {
+    try {
+        const { vendorId, categoryId, serviceDetails, price, paymentMethod, location, appointmentTime } = req.body;
+
+        // In production, `clientId` should be populated securely
+        const newOrder = new Order({
+            vendorId,
+            serviceDetails,
+            price,
+            paymentMethod,
+            location,
+            appointmentTime: new Date(appointmentTime),
+            status: 'pending'
+        });
+
+        await newOrder.save();
+        res.status(201).json({ message: 'Buyurtma muvaffaqiyatli yaratildi', order: newOrder });
+    } catch (err) {
+        console.error("Order error:", err);
+        res.status(500).json({ error: 'Buyurtma yaratishda xatolik yuz berdi' });
+    }
+});
+
 const PORT = process.env.PORT || 5000;
 app.listen(PORT, () => console.log(`Server running on port ${PORT}`));

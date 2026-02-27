@@ -8,7 +8,8 @@ const VendorProfileSchema = new mongoose.Schema({
     experienceYears: { type: Number, default: 0 },
     location: {
         type: { type: String, enum: ['Point'], default: 'Point' },
-        coordinates: { type: [Number], default: [0, 0] } // [longitude, latitude]
+        coordinates: { type: [Number], default: [0, 0] }, // [longitude, latitude]
+        address: { type: String }
     },
     services: [{
         name: { type: String, required: true },

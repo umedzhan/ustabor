@@ -48,6 +48,7 @@ const OrderFlow = () => {
         try {
             // Merge date and time
             const appointmentDateTime = new Date(`${bookingDetails.appointmentDate}T${bookingDetails.appointmentTime}`);
+            const token = localStorage.getItem('token');
 
             await axios.post(`${API_URL}/orders`, {
                 vendorId: id,
@@ -62,6 +63,8 @@ const OrderFlow = () => {
                     address: bookingDetails.address
                 },
                 appointmentTime: appointmentDateTime
+            }, {
+                headers: { Authorization: `Bearer ${token}` }
             });
 
             // Notify via Telegram SDK if supported

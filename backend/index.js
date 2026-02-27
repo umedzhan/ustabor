@@ -136,9 +136,13 @@ app.get('/api/vendor/profile', authMiddleware.verifyToken, async (req, res) => {
     try {
         const vendor = await VendorProfile.findOne({ userId: req.user.id })
             .populate('category', 'name icon');
+
+        // If not found, perhaps they haven't completed registration fully. Return a 404 but don't crash
         if (!vendor) return res.status(404).json({ error: 'Vendor profile not found' });
+
         res.json(vendor);
     } catch (err) {
+        console.error("Profile get error:", err);
         res.status(500).json({ error: 'Server error fetching vendor profile' });
     }
 });
@@ -173,12 +177,12 @@ app.get('/api/vendor/orders', authMiddleware.verifyToken, async (req, res) => {
 });
 
 // 6. Create Order
-app.post('/api/orders', async (req, res) => {
+app.post('/api/orders', authMiddleware.verifyToken, async (req, res) => {
     try {
         const { vendorId, categoryId, serviceDetails, price, paymentMethod, location, appointmentTime } = req.body;
 
-        // In production, `clientId` should be populated securely
         const newOrder = new Order({
+            clientId: req.user.id,
             vendorId,
             serviceDetails,
             price,

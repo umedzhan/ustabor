@@ -46,8 +46,8 @@ const Onboarding = () => {
                         <User size={28} />
                     </div>
                     <div className="flex-1 text-left">
-                        <h3 className="font-bold text-gray-900 text-lg">Mijozman</h3>
-                        <p className="text-gray-500 text-[11px] font-medium leading-tight">Ustalarni qidirman, xizmatlardan foydalanman</p>
+                        <h3 className="font-bold text-gray-900 text-lg">Mijozman (User)</h3>
+                        <p className="text-gray-500 text-[11px] font-medium leading-tight">Xizmat qidirish va buyurtma berish</p>
                     </div>
                     <ChevronRight className="text-gray-300 group-hover:text-primary transition-colors" size={20} />
                 </button>
@@ -60,8 +60,8 @@ const Onboarding = () => {
                         <Hammer size={28} />
                     </div>
                     <div className="flex-1 text-left">
-                        <h3 className="font-bold text-gray-900 text-lg">Ustaman</h3>
-                        <p className="text-gray-500 text-[11px] font-medium leading-tight">Xizmatlarimni taklif qilaman, daromad topaman</p>
+                        <h3 className="font-bold text-gray-900 text-lg">Ustaman (Vendor)</h3>
+                        <p className="text-gray-500 text-[11px] font-medium leading-tight">Xizmat ko'rsatish va daromad topish</p>
                     </div>
                     <ChevronRight className="text-gray-300 group-hover:text-primary transition-colors" size={20} />
                 </button>

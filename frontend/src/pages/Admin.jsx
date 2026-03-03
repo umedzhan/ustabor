@@ -2,12 +2,12 @@ import { useState, useEffect } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import axios from 'axios';
 import { API_URL } from '../config';
+import { useAuth } from '../context/AuthContext';
 
 const Admin = () => {
     const navigate = useNavigate();
     const location = useLocation();
-    const [token, setToken] = useState(localStorage.getItem('ustabor_admin_token') || null);
-    const [loginForm, setLoginForm] = useState({ username: '', password: '' });
+    const { user, token } = useAuth();
     const [activeTab, setActiveTab] = useState('moderation');
 
     useEffect(() => {
@@ -36,11 +36,11 @@ const Admin = () => {
     });
 
     useEffect(() => {
-        if (token) {
+        if (token && user?.role === 'admin') {
             fetchCategories();
             fetchPendingVendors();
         }
-    }, [token]);
+    }, [token, user]);
 
     const fetchCategories = async () => {
         try {
@@ -57,15 +57,6 @@ const Admin = () => {
             });
             setPendingVendors(data);
         } catch (err) { console.error(err); }
-    };
-
-    const handleLoginSubmit = async (e) => {
-        e.preventDefault();
-        try {
-            const { data } = await axios.post(`${API_URL}/admin/login`, loginForm);
-            setToken(data.token);
-            localStorage.setItem('ustabor_admin_token', data.token);
-        } catch (err) { alert("Noto'g'ri login yoki parol"); }
     };
 
     const handleVerify = async (vendorId, status) => {
@@ -104,22 +95,15 @@ const Admin = () => {
         } catch (err) { console.error(err); alert("Xatolik yuz berdi"); }
     };
 
-    const logout = () => {
-        setToken(null);
-        localStorage.removeItem('ustabor_admin_token');
-    };
-
-    if (!token) {
+    if (!user || user.role !== 'admin') {
         return (
-            <div className="p-4 bg-white min-h-screen flex items-center justify-center flex-col">
-                <div className="w-full max-w-sm">
-                    <h1 className="text-2xl font-bold mb-6 text-center text-gray-800">Admin Panelga kirish</h1>
-                    <form onSubmit={handleLoginSubmit} className="flex flex-col gap-4">
-                        <input required name="username" value={loginForm.username} onChange={e => setLoginForm({ ...loginForm, username: e.target.value })} className="w-full border p-3 rounded-xl" placeholder="Login" />
-                        <input required type="password" name="password" value={loginForm.password} onChange={e => setLoginForm({ ...loginForm, password: e.target.value })} className="w-full border p-3 rounded-xl" placeholder="Parol" />
-                        <button type="submit" className="bg-primary text-white py-3 rounded-xl font-bold">Kirish</button>
-                    </form>
+            <div className="p-10 flex flex-col items-center justify-center min-h-[80vh] text-center">
+                <div className="w-20 h-20 bg-red-50 text-red-500 rounded-full flex items-center justify-center mb-4">
+                    <svg size={40} fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" /></svg>
                 </div>
+                <h1 className="text-xl font-bold text-gray-900 mb-2">Kirish taqiqlangan</h1>
+                <p className="text-gray-500 text-sm">Ushbu sahifa faqat adminlar uchun.</p>
+                <button onClick={() => navigate('/')} className="mt-6 bg-primary text-white px-6 py-2 rounded-xl font-bold">Bosh sahifaga qaytish</button>
             </div>
         );
     }

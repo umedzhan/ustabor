@@ -32,8 +32,13 @@ export const AuthProvider = ({ children }) => {
                     // Setup Axios default header
                     axios.defaults.headers.common['Authorization'] = `Bearer ${token}`;
                 } else {
-                    console.log('Not running inside Telegram WebApp or basic mode.');
-                    // For local testing without Telegram, we might set a dummy user or just let it be null.
+                    console.log('Not running inside Telegram. Using Dev User login fallback.');
+                    const response = await axios.get(`${API_URL}/auth/dev-login`);
+                    const { token, user: devUser } = response.data;
+                    setToken(token);
+                    setUser(devUser);
+                    localStorage.setItem('token', token);
+                    axios.defaults.headers.common['Authorization'] = `Bearer ${token}`;
                 }
             } catch (error) {
                 console.error('Authentication error:', error);

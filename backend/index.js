@@ -68,6 +68,25 @@ app.post('/api/auth/telegram', async (req, res) => {
     }
 });
 
+// DEV LOGIN (For testing outside Telegram)
+app.get('/api/auth/dev-login', async (req, res) => {
+    try {
+        let user = await User.findOne({ telegramId: 'dev_user_123' });
+        if (!user) {
+            user = new User({
+                telegramId: 'dev_user_123',
+                name: 'Dev User (Test)',
+                role: 'client'
+            });
+            await user.save();
+        }
+        const token = authMiddleware.generateToken(user);
+        res.json({ token, user });
+    } catch (err) {
+        res.status(500).json({ error: 'Dev Auth failed' });
+    }
+});
+
 // 3. Get all vendors
 app.get('/api/vendors', async (req, res) => {
     try {
@@ -187,7 +206,10 @@ app.post('/api/orders', authMiddleware.verifyToken, async (req, res) => {
             serviceDetails,
             price,
             paymentMethod,
-            location,
+            location: {
+                ...location,
+                coordinates: [0, 0] // Default required by 2dsphere index
+            },
             appointmentTime: new Date(appointmentTime),
             status: 'pending'
         });
@@ -195,8 +217,25 @@ app.post('/api/orders', authMiddleware.verifyToken, async (req, res) => {
         await newOrder.save();
         res.status(201).json({ message: 'Buyurtma muvaffaqiyatli yaratildi', order: newOrder });
     } catch (err) {
-        console.error("Order error:", err);
-        res.status(500).json({ error: 'Buyurtma yaratishda xatolik yuz berdi' });
+        console.error("Order error details:", err.message, err.stack);
+        res.status(500).json({ error: 'Buyurtma yaratishda xatolik yuz berdi', details: err.message });
+    }
+});
+
+// 7. Update Order Status
+app.put('/api/orders/:id/status', authMiddleware.verifyToken, async (req, res) => {
+    try {
+        const { status } = req.body;
+        const order = await Order.findById(req.params.id);
+        if (!order) return res.status(404).json({ error: 'Order not found' });
+
+        order.status = status;
+        await order.save();
+
+        res.json({ message: 'Order status updated', order });
+    } catch (err) {
+        console.error("Order status update error:", err);
+        res.status(500).json({ error: 'Server error updating order status' });
     }
 });
 

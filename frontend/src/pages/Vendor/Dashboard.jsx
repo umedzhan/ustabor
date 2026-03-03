@@ -31,6 +31,21 @@ const Dashboard = () => {
         fetchDashboardData();
     }, []);
 
+    const handleUpdateStatus = async (orderId, newStatus) => {
+        try {
+            const token = localStorage.getItem('token');
+            await axios.put(`${API_URL}/orders/${orderId}/status`, { status: newStatus }, {
+                headers: { Authorization: `Bearer ${token}` }
+            });
+
+            // Update local UI state
+            setOrders(orders.map(o => o._id === orderId ? { ...o, status: newStatus } : o));
+        } catch (error) {
+            console.error("Error updating status:", error);
+            alert("Holatni o'zgartirishda xatolik yuz berdi");
+        }
+    };
+
     const getStatusBadge = (status) => {
         switch (status) {
             case 'pending': return <span className="px-2 py-1 bg-amber-100 text-amber-700 rounded-full text-[10px] font-bold">Kutilmoqda</span>;
@@ -126,11 +141,18 @@ const Dashboard = () => {
 
                                     {order.status === 'pending' && (
                                         <div className="flex gap-2 mt-1">
-                                            <button className="flex-1 py-2 bg-primary text-white text-xs font-bold rounded-xl flex justify-center items-center gap-1">
+                                            <button onClick={() => handleUpdateStatus(order._id, 'accepted')} className="flex-1 py-2 bg-primary text-white text-xs font-bold rounded-xl flex justify-center items-center gap-1">
                                                 <CheckCircle size={14} /> Qabul qilish
                                             </button>
-                                            <button className="flex-1 py-2 bg-red-50 text-red-600 text-xs font-bold rounded-xl flex justify-center items-center gap-1 border border-red-100">
+                                            <button onClick={() => handleUpdateStatus(order._id, 'cancelled')} className="flex-1 py-2 bg-red-50 text-red-600 text-xs font-bold rounded-xl flex justify-center items-center gap-1 border border-red-100">
                                                 <XCircle size={14} /> Rad etish
+                                            </button>
+                                        </div>
+                                    )}
+                                    {order.status === 'accepted' && (
+                                        <div className="flex gap-2 mt-1">
+                                            <button onClick={() => handleUpdateStatus(order._id, 'completed')} className="flex-1 py-2 bg-green-500 text-white text-xs font-bold rounded-xl flex justify-center items-center gap-1 shadow-md shadow-green-500/20 hover:bg-green-600">
+                                                <CheckCircle size={14} /> Yakunlash
                                             </button>
                                         </div>
                                     )}

@@ -68,6 +68,27 @@ app.post('/api/auth/telegram', async (req, res) => {
     }
 });
 
+// Set User Role (Onboarding)
+app.post('/api/user/set-role', authMiddleware.verifyToken, async (req, res) => {
+    try {
+        const { role } = req.body;
+        if (!['client', 'vendor'].includes(role)) {
+            return res.status(400).json({ error: 'Invalid role' });
+        }
+
+        const user = await User.findById(req.user.id);
+        if (!user) return res.status(404).json({ error: 'User not found' });
+
+        user.role = role;
+        user.onboarded = true;
+        await user.save();
+
+        res.json({ message: 'Role updated', user });
+    } catch (err) {
+        res.status(500).json({ error: 'Failed to set role' });
+    }
+});
+
 // DEV LOGIN (For testing outside Telegram)
 app.get('/api/auth/dev-login', async (req, res) => {
     try {
@@ -126,7 +147,8 @@ app.get('/api/vendors/:id', async (req, res) => {
 app.post('/api/admin/login', (req, res) => {
     const { username, password } = req.body;
     if (username === 'admin' && password === 'admin123') {
-        res.json({ token: 'ustabor-secure-token-123' });
+        const token = authMiddleware.generateToken({ _id: 'admin_id', role: 'admin' });
+        res.json({ token });
     } else {
         res.status(401).json({ error: 'Noto\'g\'ri login yoki parol' });
     }
@@ -226,16 +248,163 @@ app.post('/api/orders', authMiddleware.verifyToken, async (req, res) => {
 app.put('/api/orders/:id/status', authMiddleware.verifyToken, async (req, res) => {
     try {
         const { status } = req.body;
-        const order = await Order.findById(req.params.id);
+        const order = await Order.findById(req.params.id)
+            .populate('clientId', 'telegramId name')
+            .populate('vendorId', 'userId');
+
         if (!order) return res.status(404).json({ error: 'Order not found' });
 
+        const oldStatus = order.status;
         order.status = status;
         await order.save();
+
+        // 1. Send Bot Notifications
+        const bot = require('./bot/index');
+        if (bot) {
+            // Notify Client
+            try {
+                const clientMsg = `Sizning buyurtmangiz statusi o'zgardi: ${status.toUpperCase()}`;
+                await bot.telegram.sendMessage(order.clientId.telegramId, clientMsg);
+            } catch (e) { console.error("Notify client failed", e); }
+
+            // Notify Vendor
+            try {
+                const vendorUser = await User.findById(order.vendorId);
+                if (vendorUser && vendorUser.telegramId) {
+                    const vendorMsg = `Yangi buyurtma statusi: ${status.toUpperCase()}`;
+                    await bot.telegram.sendMessage(vendorUser.telegramId, vendorMsg);
+                }
+            } catch (e) { console.error("Notify vendor failed", e); }
+        }
+
+        // 2. Financial Logic: Handle Commission when completed
+        if (status === 'completed' && oldStatus !== 'completed') {
+            const COMMISSION_RATE = 0.1; // 10%
+            const commissionAmount = order.price * COMMISSION_RATE;
+
+            // Deduct from vendor's wallet
+            const vendorUser = await User.findById(order.vendorId);
+            if (vendorUser) {
+                vendorUser.walletBalance = (vendorUser.walletBalance || 0) - commissionAmount;
+                await vendorUser.save();
+
+                // Record transaction
+                const Transaction = require('./models/Transaction');
+                const adminTransaction = new Transaction({
+                    userId: vendorUser._id,
+                    orderId: order._id,
+                    amount: commissionAmount,
+                    type: 'commission',
+                    status: 'completed',
+                    paymentMethod: 'wallet'
+                });
+                await adminTransaction.save();
+            }
+        }
 
         res.json({ message: 'Order status updated', order });
     } catch (err) {
         console.error("Order status update error:", err);
-        res.status(500).json({ error: 'Server error updating order status' });
+        res.status(500).json({ error: 'Server error updating order status', details: err.message });
+    }
+});
+
+// Payout Request
+app.post('/api/vendor/payout', authMiddleware.verifyVendor, async (req, res) => {
+    try {
+        const { amount, method } = req.body;
+        const user = await User.findById(req.user.id);
+
+        if (user.walletBalance < amount) {
+            return res.status(400).json({ error: 'Mablaq yetarli emas' });
+        }
+
+        user.walletBalance -= amount;
+        await user.save();
+
+        const Transaction = require('./models/Transaction');
+        const payout = new Transaction({
+            userId: user._id,
+            amount,
+            type: 'payout',
+            status: 'pending',
+            paymentMethod: method
+        });
+        await payout.save();
+
+        res.json({ message: 'To\'lov so\'rovi yuborildi', balance: user.walletBalance });
+    } catch (err) {
+        res.status(500).json({ error: 'Payout request failed' });
+    }
+});
+
+// Admin: Get all vendors (with filter)
+app.get('/api/admin/vendors', authMiddleware.verifyAdmin, async (req, res) => {
+    try {
+        const { status } = req.query;
+        let query = {};
+        if (status) query.verificationStatus = status;
+
+        const vendors = await VendorProfile.find(query)
+            .populate('category', 'name')
+            .populate('userId', 'name phone telegramId');
+        res.json(vendors);
+    } catch (err) {
+        res.status(500).json({ error: 'Server error retrieving vendors' });
+    }
+});
+
+// Admin: Moderate Vendor
+app.put('/api/admin/vendors/:id/verify', authMiddleware.verifyAdmin, async (req, res) => {
+    try {
+        const { status } = req.body; // 'approved' or 'rejected'
+        const vendor = await VendorProfile.findByIdAndUpdate(req.params.id, { verificationStatus: status }, { new: true })
+            .populate('userId', 'telegramId');
+
+        if (!vendor) return res.status(404).json({ error: 'Vendor not found' });
+
+        // Notify Vendor
+        const bot = require('./bot/index');
+        if (bot && vendor.userId.telegramId) {
+            const msg = status === 'approved'
+                ? "Tabriklaymiz! Sizning usta profilingiz tasdiqlandi. Endi siz buyurtmalarni qabul qilishingiz mumkin."
+                : "Afsuski, sizning usta profilingiz rad etildi. Iltimos, ma'lumotlarni tekshirib qayta urinib ko'ring.";
+            await bot.telegram.sendMessage(vendor.userId.telegramId, msg);
+        }
+
+        res.json({ message: `Vendor status updated to ${status}`, vendor });
+    } catch (err) {
+        res.status(500).json({ error: 'Verification failed' });
+    }
+});
+
+// Admin: Broadcast Message
+app.post('/api/admin/broadcast', authMiddleware.verifyAdmin, async (req, res) => {
+    try {
+        const { message, targetRole } = req.body; // targetRole: 'all', 'client', 'vendor'
+        let query = {};
+        if (targetRole && targetRole !== 'all') query.role = targetRole;
+
+        const users = await User.find(query);
+        const bot = require('./bot/index');
+
+        if (!bot) return res.status(500).json({ error: 'Bot not running' });
+
+        let successCount = 0;
+        for (const user of users) {
+            try {
+                if (user.telegramId) {
+                    await bot.telegram.sendMessage(user.telegramId, message);
+                    successCount++;
+                }
+            } catch (e) {
+                console.error(`Broadcast failed for ${user.telegramId}`, e.message);
+            }
+        }
+
+        res.json({ message: 'Broadcast completed', total: users.length, success: successCount });
+    } catch (err) {
+        res.status(500).json({ error: 'Broadcast failed' });
     }
 });
 

@@ -16,11 +16,13 @@ const VendorRegister = () => {
         categoryId: '',
         location: '',
         services: [],
-        portfolio: []
+        portfolio: [],
+        documents: []
     });
 
     const [newService, setNewService] = useState({ name: '', price: '' });
     const [newImage, setNewImage] = useState('');
+    const [newDoc, setNewDoc] = useState('');
 
     useEffect(() => {
         // Fetch categories for the select dropdown
@@ -51,7 +53,8 @@ const VendorRegister = () => {
                     coordinates: [0, 0] // Dummy coordinates for now
                 },
                 services: formData.services,
-                portfolio: formData.portfolio
+                portfolio: formData.portfolio,
+                documents: formData.documents
             };
 
             // Post to backend. The backend authMiddleware uses the JWT token
@@ -100,6 +103,20 @@ const VendorRegister = () => {
     const removeImage = (index) => {
         const updatedPortfolio = formData.portfolio.filter((_, i) => i !== index);
         setFormData({ ...formData, portfolio: updatedPortfolio });
+    };
+
+    const addDoc = () => {
+        if (!newDoc) return;
+        setFormData({
+            ...formData,
+            documents: [...formData.documents, newDoc]
+        });
+        setNewDoc('');
+    };
+
+    const removeDoc = (index) => {
+        const updatedDocs = formData.documents.filter((_, i) => i !== index);
+        setFormData({ ...formData, documents: updatedDocs });
     };
 
     if (success) {
@@ -231,6 +248,37 @@ const VendorRegister = () => {
                             onChange={(e) => setNewImage(e.target.value)}
                         />
                         <button type="button" onClick={addImage} className="bg-primary/10 text-primary p-2.5 rounded-lg">
+                            <Plus size={20} />
+                        </button>
+                    </div>
+                </div>
+
+                {/* Verification Documents */}
+                <div className="bg-white p-5 rounded-2xl shadow-sm border border-gray-100">
+                    <h2 className="font-bold text-gray-800 mb-4 flex items-center gap-2">
+                        <CheckCircle size={18} className="text-primary" /> TASDIQLASH (Pasport/Sertifikat)
+                    </h2>
+
+                    <div className="flex flex-col gap-3 mb-4">
+                        {formData.documents.map((doc, index) => (
+                            <div key={index} className="flex items-center justify-between p-3 border border-gray-100 rounded-xl bg-gray-50">
+                                <span className="text-xs text-gray-600 truncate w-4/5">{doc}</span>
+                                <button type="button" onClick={() => removeDoc(index)} className="p-2 text-red-500 hover:bg-red-50 rounded-lg">
+                                    <Trash2 size={16} />
+                                </button>
+                            </div>
+                        ))}
+                    </div>
+
+                    <div className="flex gap-2 mt-2">
+                        <input
+                            type="text"
+                            placeholder="Hujjat (url) kiriting"
+                            className="flex-1 bg-gray-50 border border-gray-200 rounded-lg p-2.5 text-sm outline-none focus:border-primary"
+                            value={newDoc}
+                            onChange={(e) => setNewDoc(e.target.value)}
+                        />
+                        <button type="button" onClick={addDoc} className="bg-primary/10 text-primary p-2.5 rounded-lg">
                             <Plus size={20} />
                         </button>
                     </div>

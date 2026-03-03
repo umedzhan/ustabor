@@ -1,21 +1,33 @@
 import { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import axios from 'axios';
 import { API_URL } from '../config';
 
 const Admin = () => {
     const navigate = useNavigate();
+    const location = useLocation();
     const [token, setToken] = useState(localStorage.getItem('ustabor_admin_token') || null);
     const [loginForm, setLoginForm] = useState({ username: '', password: '' });
+    const [activeTab, setActiveTab] = useState('moderation');
+
+    useEffect(() => {
+        const params = new URLSearchParams(location.search);
+        const tab = params.get('tab');
+        if (tab) setActiveTab(tab);
+    }, [location]);
 
     const [categories, setCategories] = useState([]);
+    const [pendingVendors, setPendingVendors] = useState([]);
+    const [broadcastMsg, setBroadcastMsg] = useState('');
+    const [broadcastTarget, setBroadcastTarget] = useState('all');
+
     const [formData, setFormData] = useState({
         name: '',
         category: '',
-        rating: 0,
+        rating: 5,
         reviewCount: 0,
-        hourlyRate: 0,
-        experienceYears: 0,
+        hourlyRate: 50000,
+        experienceYears: 1,
         completedJobs: 0,
         location: '',
         aboutText: '',
@@ -25,23 +37,26 @@ const Admin = () => {
 
     useEffect(() => {
         if (token) {
-            const fetchCategories = async () => {
-                try {
-                    const { data } = await axios.get(`${API_URL}/categories`);
-                    setCategories(data);
-                    if (data.length > 0) {
-                        setFormData(prev => ({ ...prev, category: data[0]._id }));
-                    }
-                } catch (err) {
-                    console.error(err);
-                }
-            };
             fetchCategories();
+            fetchPendingVendors();
         }
     }, [token]);
 
-    const handleLoginChange = (e) => {
-        setLoginForm(prev => ({ ...prev, [e.target.name]: e.target.value }));
+    const fetchCategories = async () => {
+        try {
+            const { data } = await axios.get(`${API_URL}/categories`);
+            setCategories(data);
+            if (data.length > 0) setFormData(prev => ({ ...prev, category: data[0]._id }));
+        } catch (err) { console.error(err); }
+    };
+
+    const fetchPendingVendors = async () => {
+        try {
+            const { data } = await axios.get(`${API_URL}/admin/vendors?status=pending`, {
+                headers: { Authorization: `Bearer ${token}` }
+            });
+            setPendingVendors(data);
+        } catch (err) { console.error(err); }
     };
 
     const handleLoginSubmit = async (e) => {
@@ -50,14 +65,28 @@ const Admin = () => {
             const { data } = await axios.post(`${API_URL}/admin/login`, loginForm);
             setToken(data.token);
             localStorage.setItem('ustabor_admin_token', data.token);
-        } catch (err) {
-            alert("Noto'g'ri login yoki parol");
-        }
+        } catch (err) { alert("Noto'g'ri login yoki parol"); }
     };
 
-    const handleChange = (e) => {
-        const { name, value } = e.target;
-        setFormData(prev => ({ ...prev, [name]: value }));
+    const handleVerify = async (vendorId, status) => {
+        try {
+            await axios.put(`${API_URL}/admin/vendors/${vendorId}/verify`, { status }, {
+                headers: { Authorization: `Bearer ${token}` }
+            });
+            alert(`Usta holati: ${status}`);
+            fetchPendingVendors();
+        } catch (err) { alert("Xatolik yuz berdi"); }
+    };
+
+    const handleBroadcast = async (e) => {
+        e.preventDefault();
+        try {
+            await axios.post(`${API_URL}/admin/broadcast`, { message: broadcastMsg, targetRole: broadcastTarget }, {
+                headers: { Authorization: `Bearer ${token}` }
+            });
+            alert("Xabar yuborildi!");
+            setBroadcastMsg('');
+        } catch (err) { alert("Xatolik yuz berdi"); }
     };
 
     const handleSubmit = async (e) => {
@@ -67,24 +96,12 @@ const Admin = () => {
                 ...formData,
                 services: formData.services.split(',').map(s => s.trim()).filter(s => s !== '')
             };
-
-            const config = {
+            await axios.post(`${API_URL}/vendors`, dataToSubmit, {
                 headers: { Authorization: `Bearer ${token}` }
-            };
-
-            await axios.post(`${API_URL}/professionals`, dataToSubmit, config);
+            });
             alert("Usta muvaffaqiyatli qo'shildi!");
-            navigate('/');
-        } catch (err) {
-            console.error(err);
-            if (err.response && err.response.status === 403) {
-                alert("Sizda ruxsat yo'q. Qaytadan kiring.");
-                setToken(null);
-                localStorage.removeItem('ustabor_admin_token');
-            } else {
-                alert("Xatolik yuz berdi");
-            }
-        }
+            setActiveTab('moderation');
+        } catch (err) { console.error(err); alert("Xatolik yuz berdi"); }
     };
 
     const logout = () => {
@@ -98,90 +115,98 @@ const Admin = () => {
                 <div className="w-full max-w-sm">
                     <h1 className="text-2xl font-bold mb-6 text-center text-gray-800">Admin Panelga kirish</h1>
                     <form onSubmit={handleLoginSubmit} className="flex flex-col gap-4">
-                        <div>
-                            <label className="text-sm text-gray-600 mb-1 block">Login</label>
-                            <input required name="username" value={loginForm.username} onChange={handleLoginChange} className="w-full border p-3 rounded-xl" placeholder="admin" />
-                        </div>
-                        <div>
-                            <label className="text-sm text-gray-600 mb-1 block">Parol</label>
-                            <input required type="password" name="password" value={loginForm.password} onChange={handleLoginChange} className="w-full border p-3 rounded-xl" placeholder="admin123" />
-                        </div>
-                        <button type="submit" className="bg-primary text-white py-3 rounded-xl font-bold mt-2 hover:bg-primary-hover active:bg-primary transition-colors">Kirish</button>
+                        <input required name="username" value={loginForm.username} onChange={e => setLoginForm({ ...loginForm, username: e.target.value })} className="w-full border p-3 rounded-xl" placeholder="Login" />
+                        <input required type="password" name="password" value={loginForm.password} onChange={e => setLoginForm({ ...loginForm, password: e.target.value })} className="w-full border p-3 rounded-xl" placeholder="Parol" />
+                        <button type="submit" className="bg-primary text-white py-3 rounded-xl font-bold">Kirish</button>
                     </form>
-                    <button onClick={() => navigate('/')} className="w-full text-center mt-6 text-sm text-gray-500 hover:text-gray-800">Bosh sahifaga qaytish</button>
                 </div>
             </div>
         );
     }
 
     return (
-        <div className="p-4 bg-white min-h-screen pb-10">
-            <div className="flex justify-between items-center mb-6">
-                <h1 className="text-xl font-bold">Yangi usta qo'shish</h1>
-                <div className="flex gap-4">
-                    <button onClick={() => navigate('/')} className="text-sm text-gray-500">Asosiyga</button>
-                    <button onClick={logout} className="text-sm text-red-500 font-medium">Chiqish</button>
+        <div className="p-4 bg-gray-50 min-h-screen pb-10">
+            <div className="flex justify-between items-center mb-6 bg-white p-4 rounded-2xl shadow-sm">
+                <h1 className="text-xl font-bold text-primary">Ustabor Admin</h1>
+                <div className="flex gap-4 items-center">
+                    <span className="text-xs text-gray-500 font-medium">Salom, Admin</span>
+                    <button onClick={logout} className="text-xs text-red-500 font-bold px-3 py-1 bg-red-50 rounded-lg">Chiqish</button>
                 </div>
             </div>
 
-            <form onSubmit={handleSubmit} className="flex flex-col gap-4">
-                <div>
-                    <label className="text-xs font-medium text-gray-600 mb-1 block">Ism familiyasi</label>
-                    <input required name="name" value={formData.name} onChange={handleChange} className="w-full border p-3 rounded-xl text-sm outline-none focus:border-primary" placeholder="Masalan: Jamshid Vahobov" />
-                </div>
+            <div className="flex gap-2 mb-6 overflow-x-auto pb-2">
+                <button onClick={() => setActiveTab('moderation')} className={`px-4 py-2 rounded-full text-xs font-bold transition-all whitespace-nowrap ${activeTab === 'moderation' ? 'bg-primary text-white shadow-md' : 'bg-white text-gray-500'}`}>Moderatsiya ({pendingVendors.length})</button>
+                <button onClick={() => setActiveTab('add')} className={`px-4 py-2 rounded-full text-xs font-bold transition-all whitespace-nowrap ${activeTab === 'add' ? 'bg-primary text-white shadow-md' : 'bg-white text-gray-500'}`}>Usta qo'shish</button>
+                <button onClick={() => setActiveTab('broadcast')} className={`px-4 py-2 rounded-full text-xs font-bold transition-all whitespace-nowrap ${activeTab === 'broadcast' ? 'bg-primary text-white shadow-md' : 'bg-white text-gray-500'}`}>Broadcast</button>
+            </div>
 
-                <div>
-                    <label className="text-xs font-medium text-gray-600 mb-1 block">Kategoriya</label>
-                    <select required name="category" value={formData.category} onChange={handleChange} className="w-full border p-3 rounded-xl text-sm bg-white outline-none focus:border-primary">
+            {activeTab === 'moderation' && (
+                <div className="flex flex-col gap-4">
+                    {pendingVendors.length === 0 ? (
+                        <div className="text-center p-10 bg-white rounded-3xl text-gray-400 text-sm">Hozircha arizalar yo'q</div>
+                    ) : (
+                        pendingVendors.map(v => (
+                            <div key={v._id} className="bg-white p-5 rounded-3xl shadow-sm border border-gray-100">
+                                <div className="flex justify-between items-start mb-4">
+                                    <div>
+                                        <h3 className="font-bold text-gray-900">{v.userId?.name}</h3>
+                                        <p className="text-xs text-primary font-medium">{v.category?.name}</p>
+                                        <p className="text-xs text-gray-500 mt-1">{v.userId?.phone || 'Tel kiritilmagan'}</p>
+                                    </div>
+                                    <div className="flex gap-2">
+                                        <button onClick={() => handleVerify(v._id, 'approved')} className="bg-green-500 text-white text-[10px] font-bold px-3 py-2 rounded-xl">Tasdiqlash</button>
+                                        <button onClick={() => handleVerify(v._id, 'rejected')} className="bg-red-500 text-white text-[10px] font-bold px-3 py-2 rounded-xl">Rad etish</button>
+                                    </div>
+                                </div>
+                                {v.documents?.length > 0 && (
+                                    <div className="mt-4 pt-4 border-t border-gray-50">
+                                        <p className="text-[10px] font-bold text-gray-400 mb-2 uppercase">Hujjatlar:</p>
+                                        <div className="flex gap-2 overflow-x-auto">
+                                            {v.documents.map((doc, idx) => (
+                                                <a key={idx} href={doc} target="_blank" className="text-[10px] text-blue-500 underline truncate max-w-[100px]">{doc}</a>
+                                            ))}
+                                        </div>
+                                    </div>
+                                )}
+                            </div>
+                        ))
+                    )}
+                </div>
+            )}
+
+            {activeTab === 'add' && (
+                <form onSubmit={handleSubmit} className="bg-white p-6 rounded-3xl flex flex-col gap-4 shadow-sm">
+                    <input required name="name" value={formData.name} onChange={e => setFormData({ ...formData, name: e.target.value })} className="border p-3 rounded-xl text-sm" placeholder="Ism familiya" />
+                    <select required name="category" value={formData.category} onChange={e => setFormData({ ...formData, category: e.target.value })} className="border p-3 rounded-xl text-sm bg-white">
                         {categories.map(c => <option key={c._id} value={c._id}>{c.name}</option>)}
                     </select>
-                </div>
+                    <div className="grid grid-cols-2 gap-4">
+                        <input type="number" name="experienceYears" value={formData.experienceYears} onChange={e => setFormData({ ...formData, experienceYears: e.target.value })} className="border p-3 rounded-xl text-sm" placeholder="Tajriba" />
+                        <input type="number" name="hourlyRate" value={formData.hourlyRate} onChange={e => setFormData({ ...formData, hourlyRate: e.target.value })} className="border p-3 rounded-xl text-sm" placeholder="Narxi" />
+                    </div>
+                    <input name="location" value={formData.location} onChange={e => setFormData({ ...formData, location: e.target.value })} className="border p-3 rounded-xl text-sm" placeholder="Manzil" />
+                    <textarea name="aboutText" value={formData.aboutText} onChange={e => setFormData({ ...formData, aboutText: e.target.value })} className="border p-3 rounded-xl text-sm" rows="3" placeholder="Haqida"></textarea>
+                    <button type="submit" className="bg-primary text-white py-4 rounded-xl font-bold mt-2">Saqlash</button>
+                </form>
+            )}
 
-                <div className="grid grid-cols-2 gap-4">
+            {activeTab === 'broadcast' && (
+                <form onSubmit={handleBroadcast} className="bg-white p-6 rounded-3xl flex flex-col gap-5 shadow-sm">
                     <div>
-                        <label className="text-xs font-medium text-gray-600 mb-1 block">Reyting (5 bal)</label>
-                        <input required type="number" step="0.1" name="rating" value={formData.rating} onChange={handleChange} className="w-full border p-3 rounded-xl text-sm outline-none focus:border-primary" />
+                        <label className="text-xs font-bold text-gray-500 mb-2 block uppercase">Kimga yuborish:</label>
+                        <select value={broadcastTarget} onChange={e => setBroadcastTarget(e.target.value)} className="w-full border p-3 rounded-xl text-sm bg-gray-50">
+                            <option value="all">Hammaga</option>
+                            <option value="client">Faqat mijozlarga</option>
+                            <option value="vendor">Faqat ustalarga</option>
+                        </select>
                     </div>
                     <div>
-                        <label className="text-xs font-medium text-gray-600 mb-1 block">Baho soni</label>
-                        <input required type="number" name="reviewCount" value={formData.reviewCount} onChange={handleChange} className="w-full border p-3 rounded-xl text-sm outline-none focus:border-primary" />
+                        <label className="text-xs font-bold text-gray-500 mb-2 block uppercase">Xabar matni:</label>
+                        <textarea required value={broadcastMsg} onChange={e => setBroadcastMsg(e.target.value)} className="w-full border p-3 rounded-xl text-sm bg-gray-50 outline-none focus:ring-1 focus:ring-primary/20" rows="6" placeholder="Barcha foydalanuvchilarga yuboriladigan xabar..."></textarea>
                     </div>
-                    <div>
-                        <label className="text-xs font-medium text-gray-600 mb-1 block">Soatbay narxi (so'm)</label>
-                        <input required type="number" step="1000" name="hourlyRate" value={formData.hourlyRate} onChange={handleChange} className="w-full border p-3 rounded-xl text-sm outline-none focus:border-primary" />
-                    </div>
-                    <div>
-                        <label className="text-xs font-medium text-gray-600 mb-1 block">Tajriba (yil)</label>
-                        <input required type="number" name="experienceYears" value={formData.experienceYears} onChange={handleChange} className="w-full border p-3 rounded-xl text-sm outline-none focus:border-primary" />
-                    </div>
-                    <div className="col-span-2">
-                        <label className="text-xs font-medium text-gray-600 mb-1 block">Bajarilgan ishlar</label>
-                        <input required type="number" name="completedJobs" value={formData.completedJobs} onChange={handleChange} className="w-full border p-3 rounded-xl text-sm outline-none focus:border-primary" />
-                    </div>
-                </div>
-
-                <div>
-                    <label className="text-xs font-medium text-gray-600 mb-1 block">Manzil</label>
-                    <input required name="location" value={formData.location} onChange={handleChange} className="w-full border p-3 rounded-xl text-sm outline-none focus:border-primary" placeholder="Masalan: Toshkent, Yunusobod..." />
-                </div>
-
-                <div>
-                    <label className="text-xs font-medium text-gray-600 mb-1 block">Haqida (matn)</label>
-                    <textarea required name="aboutText" value={formData.aboutText} onChange={handleChange} className="w-full border p-3 rounded-xl text-sm outline-none focus:border-primary" rows="3" placeholder="Usta haqida batafsil ma'lumot"></textarea>
-                </div>
-
-                <div>
-                    <label className="text-xs font-medium text-gray-600 mb-1 block">Xizmat turlari (vergul bilan ajrating)</label>
-                    <input required name="services" value={formData.services} onChange={handleChange} className="w-full border p-3 rounded-xl text-sm outline-none focus:border-primary" placeholder="Eshik o'rnatish, Kafel terish, ..." />
-                </div>
-
-                <div>
-                    <label className="text-xs font-medium text-gray-600 mb-1 block">Rasm URL manzil</label>
-                    <input required name="imageUrl" value={formData.imageUrl} onChange={handleChange} className="w-full border p-3 rounded-xl text-sm outline-none focus:border-primary" placeholder="https://..." />
-                </div>
-
-                <button type="submit" className="bg-primary text-white py-4 rounded-xl font-bold mt-4 hover:bg-primary-hover active:bg-primary transition-colors shadow-sm shadow-primary/30">Ustani Saqlash</button>
-            </form>
+                    <button type="submit" className="bg-primary text-white py-4 rounded-xl font-bold shadow-lg shadow-primary/30 active:scale-[0.98] transition-all">Xabarni yuborish</button>
+                </form>
+            )}
         </div>
     );
 };

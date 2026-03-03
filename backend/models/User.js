@@ -5,6 +5,7 @@ const UserSchema = new mongoose.Schema({
     name: { type: String, required: true },
     phone: { type: String }, // Can be set after sharing contact
     role: { type: String, enum: ['client', 'vendor', 'admin'], default: 'client' },
+    onboarded: { type: Boolean, default: false },
     walletBalance: { type: Number, default: 0 },
 }, { timestamps: true });
 

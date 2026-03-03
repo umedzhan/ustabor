@@ -163,25 +163,6 @@ const Dashboard = () => {
                 )}
             </div>
 
-            {/* Bottom Navigation */}
-            <div className="fixed bottom-0 left-0 right-0 max-w-md mx-auto bg-white border-t border-gray-100 flex justify-between px-6 pb-safe pt-2 z-50 shadow-[0_-5px_15px_rgba(0,0,0,0.02)]">
-                <button className="flex flex-col items-center gap-1 p-2 text-primary">
-                    <LayoutDashboard size={24} />
-                    <span className="text-[10px] font-bold">Asosiy</span>
-                </button>
-                <button className="flex flex-col items-center gap-1 p-2 text-gray-400 hover:text-gray-600 transition-colors">
-                    <CheckCircle size={24} />
-                    <span className="text-[10px] font-medium">Topshiriqlar</span>
-                </button>
-                <button className="flex flex-col items-center gap-1 p-2 text-gray-400 hover:text-gray-600 transition-colors">
-                    <Wallet size={24} />
-                    <span className="text-[10px] font-medium">Moliya</span>
-                </button>
-                <button onClick={() => navigate('/vendor/profile')} className="flex flex-col items-center gap-1 p-2 text-gray-400 hover:text-gray-600 transition-colors">
-                    <Settings size={24} />
-                    <span className="text-[10px] font-medium">Profil</span>
-                </button>
-            </div>
         </div>
     );
 };

@@ -98,118 +98,150 @@ const ProfileSettings = () => {
     if (loading) return <div className="min-h-screen flex justify-center items-center"><div className="w-8 h-8 border-2 border-primary rounded-full animate-spin border-t-transparent"></div></div>;
 
     return (
-        <div className="bg-gray-50 min-h-screen pb-20">
-            <div className="bg-white flex items-center p-4 border-b border-gray-100 sticky top-0 z-10">
-                <button onClick={() => navigate(-1)} className="p-2 -ml-2 rounded-full hover:bg-gray-100">
-                    <ArrowLeft size={24} className="text-gray-800" />
+        <div className="bg-[#f8fafc] min-h-screen pb-24">
+            {/* Header */}
+            <div className="bg-white/80 backdrop-blur-md px-4 py-4 flex items-center border-b border-gray-100 sticky top-0 z-[100]">
+                <button onClick={() => navigate(-1)} className="p-2 -ml-2 rounded-full hover:bg-gray-100 transition-colors">
+                    <ArrowLeft size={24} className="text-gray-900" />
                 </button>
-                <h1 className="text-lg font-bold text-gray-900 ml-2">Profil sozlamalari</h1>
+                <div className="ml-2">
+                    <h1 className="text-lg font-black text-gray-900 leading-none">Profil sozlamalari</h1>
+                    <p className="text-[10px] text-gray-400 font-bold uppercase tracking-widest mt-1">Ma'lumotlarni tahrirlash</p>
+                </div>
             </div>
 
-            <div className="p-5 flex flex-col gap-6">
-
-                {/* Asosiy */}
-                <div className="bg-white p-5 rounded-2xl border border-gray-100 shadow-sm">
-                    <h2 className="font-bold text-gray-800 mb-4">Asosiy ma'lumotlar</h2>
-                    <div className="flex flex-col gap-4">
-                        <div>
-                            <label className="text-xs text-gray-500 font-medium ml-1">Manzil</label>
-                            <input
-                                type="text"
-                                className="w-full mt-1 bg-gray-50 border border-gray-200 rounded-xl p-3 outline-none focus:border-primary"
-                                value={formData.location}
-                                onChange={(e) => setFormData({ ...formData, location: e.target.value })}
-                            />
+            <div className="p-6 flex flex-col gap-8">
+                {/* Profile Preview Card */}
+                <div className="bg-primary rounded-[2.5rem] p-8 text-white relative overflow-hidden shadow-2xl shadow-primary/20">
+                    <div className="absolute top-0 right-0 w-32 h-32 bg-white/10 rounded-full -mr-16 -mt-16 blur-2xl"></div>
+                    <div className="relative z-10 flex flex-col items-center">
+                        <div className="w-24 h-24 bg-white/20 backdrop-blur-md rounded-[2rem] p-1 border border-white/30 shadow-inner mb-4 group cursor-pointer relative">
+                            <div className="w-full h-full bg-white rounded-[1.5rem] flex items-center justify-center overflow-hidden">
+                                {formData.portfolio && formData.portfolio.length > 0 ? (
+                                    <img src={formData.portfolio[0]} alt="avatar" className="w-full h-full object-cover" />
+                                ) : (
+                                    <span className="text-primary font-black text-3xl">{user?.name?.charAt(0) || 'U'}</span>
+                                )}
+                            </div>
+                            <div className="absolute -bottom-1 -right-1 w-8 h-8 bg-white text-primary rounded-xl flex items-center justify-center shadow-lg border-4 border-primary">
+                                <ImageIcon size={14} />
+                            </div>
                         </div>
-                        <div>
-                            <label className="text-xs text-gray-500 font-medium ml-1">O'zingiz haqingizda (Bio)</label>
-                            <textarea
-                                rows="3"
-                                className="w-full mt-1 bg-gray-50 border border-gray-200 rounded-xl p-3 outline-none focus:border-primary"
-                                value={formData.aboutText}
-                                onChange={(e) => setFormData({ ...formData, aboutText: e.target.value })}
-                            />
-                        </div>
+                        <h2 className="text-xl font-black">{user?.name}</h2>
+                        <p className="text-white/60 text-xs font-bold uppercase tracking-[0.2em] mt-1">Professional usta</p>
                     </div>
                 </div>
 
-                {/* Xizmatlar */}
-                <div className="bg-white p-5 rounded-2xl border border-gray-100 shadow-sm">
-                    <h2 className="font-bold text-gray-800 mb-4">Xizmatlar va narxlar</h2>
+                {/* Main Settings */}
+                <div className="flex flex-col gap-6">
+                    <div className="bg-white p-6 rounded-[2.5rem] shadow-xl shadow-black/[0.03] border border-gray-50">
+                        <h2 className="text-xs font-black text-gray-400 uppercase tracking-widest mb-6 ml-1">Umumiy ma'lumotlar</h2>
 
-                    <div className="flex flex-col gap-3 mb-4">
-                        {formData.services.map((svc, index) => (
-                            <div key={index} className="flex items-center justify-between p-3 border border-gray-100 rounded-xl bg-gray-50">
-                                <div>
-                                    <p className="font-medium text-sm text-gray-800">{svc.name}</p>
-                                    <p className="text-xs text-primary font-bold">{svc.price.toLocaleString()} so'm</p>
+                        <div className="space-y-6">
+                            <div>
+                                <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest ml-1 mb-2 block">Xizmat ko'rsatish manzili</label>
+                                <div className="relative">
+                                    <input
+                                        type="text"
+                                        className="w-full bg-gray-50 border border-gray-100 rounded-2xl p-4 text-sm font-bold text-gray-800 outline-none focus:ring-4 focus:ring-primary/10 transition-all"
+                                        value={formData.location}
+                                        onChange={(e) => setFormData({ ...formData, location: e.target.value })}
+                                        placeholder="Shahar, tuman, ko'cha..."
+                                    />
                                 </div>
-                                <button onClick={() => removeService(index)} className="p-2 text-red-500 hover:bg-red-50 rounded-lg">
-                                    <Trash2 size={16} />
-                                </button>
                             </div>
-                        ))}
+                            <div>
+                                <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest ml-1 mb-2 block">Professional tavsif (Bio)</label>
+                                <textarea
+                                    rows="4"
+                                    className="w-full bg-gray-50 border border-gray-100 rounded-2xl p-4 text-sm font-bold text-gray-800 outline-none focus:ring-4 focus:ring-primary/10 transition-all resize-none"
+                                    value={formData.aboutText}
+                                    onChange={(e) => setFormData({ ...formData, aboutText: e.target.value })}
+                                    placeholder="Tajribangiz va xizmat uslubingiz haqida yozing..."
+                                />
+                            </div>
+                        </div>
                     </div>
 
-                    <div className="flex gap-2 items-start mt-2 border-t pt-4">
-                        <div className="flex-1 flex flex-col gap-2">
+                    {/* Services */}
+                    <div className="bg-white p-6 rounded-[2.5rem] shadow-xl shadow-black/[0.03] border border-gray-50">
+                        <h2 className="text-xs font-black text-gray-400 uppercase tracking-widest mb-6 ml-1">Xizmatlar & Portfellar</h2>
+
+                        <div className="space-y-3 mb-6">
+                            {formData.services.map((svc, index) => (
+                                <div key={index} className="flex items-center justify-between p-4 bg-gray-50/50 border border-gray-50 rounded-2xl animate-slide-in">
+                                    <div className="flex flex-col">
+                                        <span className="font-black text-gray-900 text-sm">{svc.name}</span>
+                                        <span className="text-[11px] font-black text-primary uppercase">{svc.price.toLocaleString()} so'm</span>
+                                    </div>
+                                    <button onClick={() => removeService(index)} className="w-9 h-9 bg-red-50 text-red-500 rounded-xl flex items-center justify-center">
+                                        <Trash2 size={16} />
+                                    </button>
+                                </div>
+                            ))}
+                        </div>
+
+                        <div className="p-4 bg-gray-50 rounded-[2rem] border border-gray-100/50">
+                            <div className="space-y-2 mb-3">
+                                <input
+                                    type="text"
+                                    placeholder="Xizmat nomi"
+                                    className="w-full bg-white border border-gray-100 rounded-xl p-3 text-xs font-bold outline-none focus:ring-2 focus:ring-primary/10"
+                                    value={newService.name}
+                                    onChange={(e) => setNewService({ ...newService, name: e.target.value })}
+                                />
+                                <input
+                                    type="number"
+                                    placeholder="Narxi"
+                                    className="w-full bg-white border border-gray-100 rounded-xl p-3 text-xs font-bold outline-none focus:ring-2 focus:ring-primary/10"
+                                    value={newService.price}
+                                    onChange={(e) => setNewService({ ...newService, price: e.target.value })}
+                                />
+                            </div>
+                            <button onClick={addService} className="w-full py-3 bg-white text-primary text-[10px] font-black rounded-xl border border-primary/20 flex items-center justify-center gap-2 hover:bg-primary hover:text-white transition-all">
+                                <Plus size={14} /> Xizmat qo'shish
+                            </button>
+                        </div>
+                    </div>
+
+                    {/* Portfolio */}
+                    <div className="bg-white p-6 rounded-[2.5rem] shadow-xl shadow-black/[0.03] border border-gray-50">
+                        <h2 className="text-xs font-black text-gray-400 uppercase tracking-widest mb-6 ml-1">Ishlar galereyasi</h2>
+                        <div className="grid grid-cols-3 gap-3 mb-6">
+                            {formData.portfolio.map((img, index) => (
+                                <div key={index} className="relative aspect-square rounded-2xl overflow-hidden border border-gray-100 shadow-sm group">
+                                    <img src={img} alt="portfolio" className="w-full h-full object-cover" />
+                                    <button onClick={() => removeImage(index)} className="absolute inset-0 bg-red-500/60 flex items-center justify-center text-white opacity-0 group-hover:opacity-100 transition-opacity">
+                                        <Trash2 size={18} />
+                                    </button>
+                                </div>
+                            ))}
+                        </div>
+                        <div className="flex gap-2">
                             <input
                                 type="text"
-                                placeholder="Xizmat nomi"
-                                className="w-full bg-gray-50 border border-gray-200 rounded-lg p-2.5 text-sm outline-none focus:border-primary"
-                                value={newService.name}
-                                onChange={(e) => setNewService({ ...newService, name: e.target.value })}
+                                placeholder="Rasm URL havolasi..."
+                                className="flex-1 bg-gray-50 border border-gray-100 rounded-xl p-3 text-xs font-bold outline-none focus:ring-2 focus:ring-primary/10"
+                                value={newImage}
+                                onChange={(e) => setNewImage(e.target.value)}
                             />
-                            <input
-                                type="number"
-                                placeholder="Narxi (so'm)"
-                                className="w-full bg-gray-50 border border-gray-200 rounded-lg p-2.5 text-sm outline-none focus:border-primary"
-                                value={newService.price}
-                                onChange={(e) => setNewService({ ...newService, price: e.target.value })}
-                            />
+                            <button onClick={addImage} className="w-12 h-12 bg-primary text-white rounded-xl flex items-center justify-center shadow-lg shadow-primary/20 hover:scale-105 transition-all">
+                                <Plus size={20} />
+                            </button>
                         </div>
-                        <button onClick={addService} className="bg-primary/10 text-primary p-2.5 rounded-lg flex items-center justify-center h-full">
-                            <Plus size={20} />
-                        </button>
                     </div>
-                </div>
-
-                {/* Portfolio */}
-                <div className="bg-white p-5 rounded-2xl border border-gray-100 shadow-sm">
-                    <h2 className="font-bold text-gray-800 mb-4">Portfolio (Rasmlar url)</h2>
-
-                    <div className="grid grid-cols-3 gap-2 mb-4">
-                        {formData.portfolio.map((img, index) => (
-                            <div key={index} className="relative aspect-square rounded-xl overflow-hidden border border-gray-200">
-                                <img src={img} alt="portfolio" className="w-full h-full object-cover" />
-                                <button onClick={() => removeImage(index)} className="absolute top-1 right-1 bg-white/80 p-1 rounded-md text-red-500 hover:bg-white">
-                                    <Trash2 size={14} />
-                                </button>
-                            </div>
-                        ))}
-                    </div>
-
-                    <div className="flex gap-2 mt-2">
-                        <input
-                            type="text"
-                            placeholder="Rasm havolasini (URL) kiriting"
-                            className="flex-1 bg-gray-50 border border-gray-200 rounded-lg p-2.5 text-sm outline-none focus:border-primary"
-                            value={newImage}
-                            onChange={(e) => setNewImage(e.target.value)}
-                        />
-                        <button onClick={addImage} className="bg-primary/10 text-primary p-2.5 rounded-lg">
-                            <Plus size={20} />
-                        </button>
-                    </div>
-                    <p className="text-[10px] text-gray-400 mt-2">Hozircha faqat rasm URL manzilini kiriting (masalan: https://...)</p>
                 </div>
 
                 <button
                     onClick={handleSave}
                     disabled={saving}
-                    className="w-full bg-primary text-white font-bold py-4 rounded-full flex justify-center items-center gap-2 shadow-lg shadow-primary/30 active:scale-[0.98] transition-all disabled:opacity-50"
+                    className="w-full bg-primary text-white font-black py-5 rounded-[2rem] shadow-2xl shadow-primary/30 active:scale-[0.98] transition-all disabled:opacity-50 flex justify-center items-center gap-3 uppercase tracking-[0.2em] text-sm"
                 >
-                    {saving ? <div className="w-5 h-5 border-2 border-white rounded-full animate-spin border-t-transparent"></div> : <><Save size={20} /> Saqlash</>}
+                    {saving ? (
+                        <div className="w-6 h-6 border-3 border-white rounded-full animate-spin border-t-transparent"></div>
+                    ) : (
+                        <><Save size={20} /> Ma'lumotlarni saqlash</>
+                    )}
                 </button>
             </div>
         </div>

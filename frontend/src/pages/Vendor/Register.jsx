@@ -1,13 +1,10 @@
 import { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import { API_URL } from '../../config';
 import { useAuth } from '../../context/AuthContext';
-import { User, MapPin, Briefcase, CheckCircle, Plus, Trash2, Image as ImageIcon } from 'lucide-react';
+import { User, MapPin, Briefcase, CheckCircle } from 'lucide-react';
 
 const VendorRegister = () => {
-    const { user } = useAuth();
-    const navigate = useNavigate();
     const [categories, setCategories] = useState([]);
     const [loading, setLoading] = useState(false);
     const [success, setSuccess] = useState(false);
@@ -135,161 +132,208 @@ const VendorRegister = () => {
     }
 
     return (
-        <div className="bg-gray-50 min-h-screen pb-6">
-            <div className="bg-primary text-white p-6 rounded-b-3xl">
-                <h1 className="text-2xl font-bold mb-1">Usta bo'lish</h1>
-                <p className="text-white/80 text-sm">Xizmatlaringizni taklif qiling va daromad topishni boshlang</p>
+        <div className="bg-[#f8fafc] min-h-screen pb-12">
+            {/* Premium Header */}
+            <div className="bg-primary text-white pt-10 pb-20 px-6 rounded-b-[3.5rem] shadow-2xl shadow-primary/20 relative overflow-hidden">
+                <div className="absolute top-0 right-0 w-64 h-64 bg-white/10 rounded-full -mr-20 -mt-20 blur-3xl"></div>
+                <div className="absolute top-0 left-0 w-32 h-32 bg-white/5 rounded-full -ml-10 -mt-10 blur-2xl"></div>
+
+                <div className="relative z-10 text-center">
+                    <h1 className="text-3xl font-black tracking-tight mb-2 uppercase italic tracking-widest">Usta Bo'lish</h1>
+                    <p className="text-white/70 text-sm font-medium max-w-[250px] mx-auto">Professional jamoamizga qo'shiling va daromad topishni boshlang</p>
+                </div>
             </div>
 
-            <form onSubmit={handleSubmit} className="p-5 mt-2 flex flex-col gap-5">
-                {/* Asosiy ma'lumotlar */}
-                <div className="bg-white p-5 rounded-2xl shadow-sm border border-gray-100">
-                    <h2 className="font-bold text-gray-800 mb-4 flex items-center gap-2">
-                        <User size={18} className="text-primary" /> Shaxsiy ma'lumotlar
-                    </h2>
+            <form onSubmit={handleSubmit} className="px-6 -mt-10 relative z-20 flex flex-col gap-6">
+                {/* Step 1: Category & Location */}
+                <div className="bg-white p-6 rounded-[2.5rem] shadow-xl shadow-black/[0.03] border border-gray-50">
+                    <div className="flex items-center gap-3 mb-6">
+                        <div className="w-10 h-10 bg-primary/10 rounded-2xl flex items-center justify-center text-primary">
+                            <User size={20} />
+                        </div>
+                        <h2 className="font-black text-gray-900 tracking-tight">Asosiy ma'lumotlar</h2>
+                    </div>
 
-                    <div className="flex flex-col gap-4">
-                        <div>
-                            <label className="text-xs text-gray-500 font-medium ml-1">Kategoriya</label>
-                            <select
-                                className="w-full mt-1 bg-gray-50 border border-gray-200 rounded-xl p-3 outline-none focus:border-primary focus:ring-1 focus:ring-primary/20 appearance-none"
-                                value={formData.categoryId}
-                                onChange={(e) => setFormData({ ...formData, categoryId: e.target.value })}
-                                required
-                            >
-                                {categories.map(cat => (
-                                    <option key={cat._id} value={cat._id}>{cat.name}</option>
-                                ))}
-                            </select>
+                    <div className="space-y-5">
+                        <div className="relative">
+                            <label className="text-[10px] font-black text-gray-400 uppercase tracking-[0.15em] ml-1 mb-2 block">Sizning sohangiz</label>
+                            <div className="relative">
+                                <select
+                                    className="w-full bg-gray-50 border border-gray-100 rounded-2xl p-4 text-sm font-bold text-gray-800 outline-none focus:ring-4 focus:ring-primary/10 appearance-none transition-all pr-12"
+                                    value={formData.categoryId}
+                                    onChange={(e) => setFormData({ ...formData, categoryId: e.target.value })}
+                                    required
+                                >
+                                    {categories.map(cat => (
+                                        <option key={cat._id} value={cat._id}>{cat.name}</option>
+                                    ))}
+                                </select>
+                                <div className="absolute right-4 top-1/2 -translate-y-1/2 pointer-events-none text-primary">
+                                    <Briefcase size={18} />
+                                </div>
+                            </div>
                         </div>
 
                         <div>
-                            <label className="text-xs text-gray-500 font-medium ml-1 flex items-center gap-1">
-                                <MapPin size={12} /> Manzil
-                            </label>
-                            <input
-                                type="text"
-                                placeholder="Masalan: Toshkent, Yunusobod"
-                                className="w-full mt-1 bg-gray-50 border border-gray-200 rounded-xl p-3 outline-none focus:border-primary focus:ring-1 focus:ring-primary/20"
-                                value={formData.location}
-                                onChange={(e) => setFormData({ ...formData, location: e.target.value })}
-                                required
-                            />
+                            <label className="text-[10px] font-black text-gray-400 uppercase tracking-[0.15em] ml-1 mb-2 block">Xizmat ko'rsatish manzili</label>
+                            <div className="relative">
+                                <input
+                                    type="text"
+                                    placeholder="Toshkent, Yunusobod..."
+                                    className="w-full bg-gray-50 border border-gray-100 rounded-2xl p-4 text-sm font-bold text-gray-800 outline-none focus:ring-4 focus:ring-primary/10 transition-all pr-12"
+                                    value={formData.location}
+                                    onChange={(e) => setFormData({ ...formData, location: e.target.value })}
+                                    required
+                                />
+                                <MapPin size={18} className="absolute right-4 top-1/2 -translate-y-1/2 text-primary" />
+                            </div>
                         </div>
                     </div>
                 </div>
 
-                {/* Xizmat va narxlar */}
-                <div className="bg-white p-5 rounded-2xl shadow-sm border border-gray-100">
-                    <h2 className="font-bold text-gray-800 mb-4 flex items-center gap-2">
-                        <Briefcase size={18} className="text-primary" /> Xizmatlar
-                    </h2>
+                {/* Step 2: Services */}
+                <div className="bg-white p-6 rounded-[2.5rem] shadow-xl shadow-black/[0.03] border border-gray-50">
+                    <div className="flex items-center gap-3 mb-6">
+                        <div className="w-10 h-10 bg-blue-50 rounded-2xl flex items-center justify-center text-blue-500">
+                            <Briefcase size={20} />
+                        </div>
+                        <h2 className="font-black text-gray-900 tracking-tight">Xizmatlar & Narxlar</h2>
+                    </div>
 
-                    <div className="flex flex-col gap-3 mb-4">
+                    <div className="space-y-3 mb-6">
                         {formData.services.map((svc, index) => (
-                            <div key={index} className="flex items-center justify-between p-3 border border-gray-100 rounded-xl bg-gray-50">
-                                <div>
-                                    <p className="font-medium text-sm text-gray-800">{svc.name}</p>
-                                    <p className="text-xs text-primary font-bold">{svc.price.toLocaleString()} so'm</p>
+                            <div key={index} className="flex items-center justify-between p-4 bg-gray-50/50 border border-gray-50 rounded-2xl group animate-slide-in">
+                                <div className="flex flex-col">
+                                    <span className="font-black text-gray-900 text-sm">{svc.name}</span>
+                                    <span className="text-[11px] font-black text-primary uppercase">{svc.price.toLocaleString()} so'm</span>
                                 </div>
-                                <button type="button" onClick={() => removeService(index)} className="p-2 text-red-500 hover:bg-red-50 rounded-lg">
+                                <button type="button" onClick={() => removeService(index)} className="w-10 h-10 bg-red-50 text-red-500 rounded-xl flex items-center justify-center hover:bg-red-100 transition-colors">
                                     <Trash2 size={16} />
                                 </button>
                             </div>
                         ))}
                     </div>
 
-                    <div className="flex gap-2 items-start mt-2 border-t pt-4">
-                        <div className="flex-1 flex flex-col gap-2">
+                    <div className="p-5 bg-gray-50 rounded-[2rem] border border-gray-100/50">
+                        <div className="space-y-3 mb-4">
                             <input
                                 type="text"
-                                placeholder="Xizmat nomi"
-                                className="w-full bg-gray-50 border border-gray-200 rounded-lg p-2.5 text-sm outline-none focus:border-primary"
+                                placeholder="Xizmat nomi (masalan: Kran o'rnatish)"
+                                className="w-full bg-white border border-gray-100 rounded-xl p-3 text-xs font-bold outline-none focus:ring-2 focus:ring-primary/10"
                                 value={newService.name}
                                 onChange={(e) => setNewService({ ...newService, name: e.target.value })}
                             />
                             <input
                                 type="number"
                                 placeholder="Narxi (so'm)"
-                                className="w-full bg-gray-50 border border-gray-200 rounded-lg p-2.5 text-sm outline-none focus:border-primary"
+                                className="w-full bg-white border border-gray-100 rounded-xl p-3 text-xs font-bold outline-none focus:ring-2 focus:ring-primary/10"
                                 value={newService.price}
                                 onChange={(e) => setNewService({ ...newService, price: e.target.value })}
                             />
                         </div>
-                        <button type="button" onClick={addService} className="bg-primary/10 text-primary p-2.5 rounded-lg flex items-center justify-center h-full">
-                            <Plus size={20} />
+                        <button
+                            type="button"
+                            onClick={addService}
+                            disabled={!newService.name || !newService.price}
+                            className="w-full py-3 bg-white text-primary text-[10px] font-black rounded-xl border border-primary/20 flex items-center justify-center gap-2 hover:bg-primary hover:text-white transition-all disabled:opacity-30 uppercase tracking-[0.1em]"
+                        >
+                            <Plus size={14} /> Xizmatni qo'shish
                         </button>
                     </div>
                 </div>
 
-                {/* Portfolio */}
-                <div className="bg-white p-5 rounded-2xl shadow-sm border border-gray-100">
-                    <h2 className="font-bold text-gray-800 mb-4 flex items-center gap-2">
-                        <ImageIcon size={18} className="text-primary" /> Portfolio (Rasmlar url)
-                    </h2>
+                {/* Step 3: Portfolio */}
+                <div className="bg-white p-6 rounded-[2.5rem] shadow-xl shadow-black/[0.03] border border-gray-50">
+                    <div className="flex items-center gap-3 mb-6">
+                        <div className="w-10 h-10 bg-amber-50 rounded-2xl flex items-center justify-center text-amber-500">
+                            <ImageIcon size={20} />
+                        </div>
+                        <h2 className="font-black text-gray-900 tracking-tight">Portfolio</h2>
+                    </div>
 
-                    <div className="grid grid-cols-3 gap-2 mb-4">
+                    <div className="grid grid-cols-3 gap-3 mb-6">
                         {formData.portfolio.map((img, index) => (
-                            <div key={index} className="relative aspect-square rounded-xl overflow-hidden border border-gray-200">
+                            <div key={index} className="relative aspect-square rounded-2xl overflow-hidden border-2 border-gray-50 ring-4 ring-gray-50/30 group">
                                 <img src={img} alt="portfolio" className="w-full h-full object-cover" />
-                                <button type="button" onClick={() => removeImage(index)} className="absolute top-1 right-1 bg-white/80 p-1 rounded-md text-red-500 hover:bg-white">
-                                    <Trash2 size={14} />
+                                <button type="button" onClick={() => removeImage(index)} className="absolute inset-0 bg-red-500/80 flex items-center justify-center text-white opacity-0 group-hover:opacity-100 transition-opacity">
+                                    <Trash2 size={20} />
                                 </button>
                             </div>
                         ))}
+                        {formData.portfolio.length < 6 && (
+                            <div className="aspect-square bg-gray-50 border-2 border-dashed border-gray-200 rounded-2xl flex flex-col items-center justify-center text-gray-300">
+                                <ImageIcon size={24} />
+                                <span className="text-[8px] font-black uppercase mt-1">Sizniki</span>
+                            </div>
+                        )}
                     </div>
 
-                    <div className="flex gap-2 mt-2">
+                    <div className="flex gap-2">
                         <input
                             type="text"
-                            placeholder="Rasm havolasini (URL) kiriting"
-                            className="flex-1 bg-gray-50 border border-gray-200 rounded-lg p-2.5 text-sm outline-none focus:border-primary"
+                            placeholder="Rasm URL (masalan: unsplash.com/...)"
+                            className="flex-1 bg-gray-50 border border-gray-100 rounded-xl p-3 text-xs font-bold outline-none focus:ring-2 focus:ring-primary/10"
                             value={newImage}
                             onChange={(e) => setNewImage(e.target.value)}
                         />
-                        <button type="button" onClick={addImage} className="bg-primary/10 text-primary p-2.5 rounded-lg">
+                        <button type="button" onClick={addImage} className="w-12 h-12 bg-primary text-white rounded-xl flex items-center justify-center shadow-lg shadow-primary/20 hover:scale-105 transition-all">
                             <Plus size={20} />
                         </button>
                     </div>
                 </div>
 
-                {/* Verification Documents */}
-                <div className="bg-white p-5 rounded-2xl shadow-sm border border-gray-100">
-                    <h2 className="font-bold text-gray-800 mb-4 flex items-center gap-2">
-                        <CheckCircle size={18} className="text-primary" /> TASDIQLASH (Pasport/Sertifikat)
-                    </h2>
+                {/* Step 4: Verification */}
+                <div className="bg-white p-6 rounded-[2.5rem] shadow-xl shadow-black/[0.03] border border-gray-50">
+                    <div className="flex items-center gap-3 mb-2">
+                        <div className="w-10 h-10 bg-green-50 rounded-2xl flex items-center justify-center text-green-500">
+                            <CheckCircle size={20} />
+                        </div>
+                        <h2 className="font-black text-gray-900 tracking-tight">Tasdiqlash</h2>
+                    </div>
+                    <p className="text-[10px] text-gray-400 font-bold uppercase tracking-wider mb-6 ml-1">Sertifikat yoki pasport nusxasi</p>
 
-                    <div className="flex flex-col gap-3 mb-4">
+                    <div className="space-y-2 mb-6 text-left">
                         {formData.documents.map((doc, index) => (
-                            <div key={index} className="flex items-center justify-between p-3 border border-gray-100 rounded-xl bg-gray-50">
-                                <span className="text-xs text-gray-600 truncate w-4/5">{doc}</span>
-                                <button type="button" onClick={() => removeDoc(index)} className="p-2 text-red-500 hover:bg-red-50 rounded-lg">
-                                    <Trash2 size={16} />
+                            <div key={index} className="flex items-center gap-3 p-3 bg-green-50/50 border border-green-100 rounded-xl">
+                                <CheckCircle size={14} className="text-green-500" />
+                                <span className="text-[10px] font-bold text-green-700 truncate flex-1">{doc}</span>
+                                <button type="button" onClick={() => removeDoc(index)} className="text-red-400">
+                                    <Trash2 size={12} />
                                 </button>
                             </div>
                         ))}
                     </div>
 
-                    <div className="flex gap-2 mt-2">
+                    <div className="flex gap-2">
                         <input
                             type="text"
-                            placeholder="Hujjat (url) kiriting"
-                            className="flex-1 bg-gray-50 border border-gray-200 rounded-lg p-2.5 text-sm outline-none focus:border-primary"
+                            placeholder="Hujjat URL manzilini kiriting"
+                            className="flex-1 bg-gray-50 border border-gray-100 rounded-xl p-3 text-xs font-bold outline-none focus:ring-2 focus:ring-primary/10"
                             value={newDoc}
                             onChange={(e) => setNewDoc(e.target.value)}
                         />
-                        <button type="button" onClick={addDoc} className="bg-primary/10 text-primary p-2.5 rounded-lg">
+                        <button type="button" onClick={addDoc} className="w-12 h-12 bg-gray-900 text-white rounded-xl flex items-center justify-center shadow-lg hover:scale-105 transition-all">
                             <Plus size={20} />
                         </button>
                     </div>
+                </div>
+
+                <div className="mt-4 px-2">
+                    <p className="text-[10px] text-gray-400 text-center leading-relaxed">
+                        Tugmani bosish orqali siz bizning <span className="text-primary font-bold">Foydalanish shartlarimizga</span> rozilik bildirasiz
+                    </p>
                 </div>
 
                 <button
                     type="submit"
                     disabled={loading || !formData.categoryId || formData.services.length === 0}
-                    className="w-full bg-primary text-white font-bold py-4 rounded-full mt-4 flex justify-center items-center shadow-lg shadow-primary/30 active:scale-[0.98] transition-all disabled:opacity-50"
+                    className="w-full bg-primary text-white font-black py-5 rounded-[2rem] shadow-2xl shadow-primary/30 active:scale-[0.98] transition-all disabled:opacity-50 uppercase tracking-[0.2em] text-sm"
                 >
-                    {loading ? <div className="w-5 h-5 border-2 border-white rounded-full animate-spin border-t-transparent"></div> : "Ro'yxatdan o'tish"}
+                    {loading ? (
+                        <div className="w-6 h-6 border-3 border-white rounded-full animate-spin border-t-transparent mx-auto"></div>
+                    ) : (
+                        "Arizani yuborish"
+                    )}
                 </button>
             </form>
         </div>

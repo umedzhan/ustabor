@@ -5,10 +5,8 @@ import { useAuth } from '../../context/AuthContext';
 import axios from 'axios';
 import { API_URL } from '../../config';
 
-const Dashboard = () => {
-    const { user } = useAuth();
-    const navigate = useNavigate();
-    const [orders, setOrders] = useState([]);
+const VendorDashboard = () => {
+    const { user, setUser } = useAuth();
     const [loading, setLoading] = useState(true);
 
     useEffect(() => {
@@ -57,114 +55,172 @@ const Dashboard = () => {
     };
 
     return (
-        <div className="bg-gray-50 min-h-screen pb-20">
-            {/* Header */}
-            <div className="bg-primary text-white p-5 rounded-b-3xl shadow-md">
-                <div className="flex justify-between items-center mb-6">
-                    <div className="flex items-center gap-3">
-                        <div className="w-12 h-12 bg-white/20 rounded-full border-2 border-white flex items-center justify-center text-lg pl-1 pb-1 font-bold">
-                            {user?.name?.charAt(0) || 'U'}
+        <div className="bg-[#f8fafc] min-h-screen pb-24">
+            {/* Premium Header */}
+            <div className="bg-primary text-white pt-8 pb-14 px-6 rounded-b-[3rem] shadow-2xl shadow-primary/20 relative overflow-hidden">
+                <div className="absolute top-0 right-0 w-64 h-64 bg-white/10 rounded-full -mr-20 -mt-20 blur-3xl"></div>
+                <div className="absolute bottom-0 left-0 w-40 h-40 bg-white/5 rounded-full -ml-10 -mb-10 blur-2xl"></div>
+
+                <div className="flex justify-between items-center mb-8 relative z-10">
+                    <div className="flex items-center gap-4">
+                        <div className="w-14 h-14 bg-white/20 backdrop-blur-md rounded-2xl border border-white/30 flex items-center justify-center p-1 shadow-inner">
+                            <div className="w-full h-full bg-white rounded-xl flex items-center justify-center text-primary font-black text-xl">
+                                {user?.name?.charAt(0) || 'U'}
+                            </div>
                         </div>
                         <div>
-                            <h1 className="font-bold text-lg leading-tight">{user?.name || 'Usta'}</h1>
-                            <span className="text-white/80 text-xs flex items-center gap-1 mt-0.5">
-                                <span className="w-2 h-2 rounded-full bg-green-400"></span>
-                                Online
-                            </span>
+                            <p className="text-white/70 text-[10px] font-bold uppercase tracking-[0.2em]">Usta Markazi</p>
+                            <h1 className="font-black text-xl tracking-tight leading-none mt-1">{user?.name || 'Usta'}</h1>
+                            <div className="flex items-center gap-1.5 mt-2 bg-white/10 backdrop-blur-md px-2 py-0.5 rounded-full border border-white/10 w-fit">
+                                <span className="w-1.5 h-1.5 rounded-full bg-green-400 animate-pulse"></span>
+                                <span className="text-[10px] font-bold text-white/90">Faol rejim</span>
+                            </div>
                         </div>
                     </div>
-                    <button className="p-2 bg-white/10 rounded-full relative">
-                        <Bell size={20} />
-                        <span className="absolute top-1 right-1 w-2.5 h-2.5 bg-red-500 rounded-full border-2 border-primary"></span>
+                    <button className="w-12 h-12 bg-white/10 backdrop-blur-md rounded-2xl border border-white/20 flex items-center justify-center relative hover:bg-white/20 transition-all">
+                        <Bell size={22} className="text-white" />
+                        <span className="absolute top-2.5 right-2.5 w-2 h-2 bg-red-500 rounded-full border-2 border-primary"></span>
                     </button>
                 </div>
 
-                <div className="bg-white/10 rounded-2xl p-4 backdrop-blur-sm border border-white/20">
-                    <div className="flex items-center gap-3 mb-2">
-                        <Wallet className="text-white/80" size={20} />
-                        <span className="text-white/80 text-sm font-medium">Hamyon balansi</span>
+                {/* Wallet Card - Glassmorphism */}
+                <div className="bg-white/10 backdrop-blur-lg rounded-[2rem] p-6 border border-white/20 shadow-xl relative z-10">
+                    <div className="flex items-center justify-between mb-4">
+                        <div className="flex items-center gap-2">
+                            <div className="w-8 h-8 bg-white/10 rounded-lg flex items-center justify-center">
+                                <Wallet className="text-white/80" size={18} />
+                            </div>
+                            <span className="text-white/80 text-xs font-bold uppercase tracking-wider">Hamyon balansi</span>
+                        </div>
+                        <Settings size={18} className="text-white/40 cursor-pointer" />
                     </div>
                     <div className="flex justify-between items-end">
-                        <span className="text-3xl font-bold">{user?.walletBalance?.toLocaleString() || '0'} <span className="text-lg font-normal text-white/80">so'm</span></span>
-                        <button className="bg-white text-primary px-4 py-1.5 rounded-full text-xs font-bold hover:bg-gray-100 transition-colors">
-                            Pul yechish
+                        <div>
+                            <span className="text-4xl font-black tracking-tighter">{user?.walletBalance?.toLocaleString() || '0'}</span>
+                            <span className="text-sm font-bold text-white/60 ml-2 uppercase tracking-widest text-[11px]">so'm</span>
+                        </div>
+                        <button className="bg-white text-primary px-6 py-2.5 rounded-2xl text-xs font-black shadow-lg shadow-black/5 hover:scale-105 active:scale-95 transition-all">
+                            Yechib olish
                         </button>
                     </div>
                 </div>
             </div>
 
-            {/* Content */}
-            <div className="p-5">
-                <h2 className="font-bold text-gray-900 mb-4 flex items-center gap-2">
-                    <Clock className="text-primary" size={20} />
-                    Faol buyurtmalar
-                </h2>
+            {/* Stats Sub-Grid */}
+            <div className="px-6 -mt-8 relative z-20 grid grid-cols-2 gap-4">
+                <div className="bg-white rounded-3xl p-5 shadow-xl shadow-black/[0.03] border border-gray-50 flex flex-col gap-1">
+                    <span className="text-gray-400 text-[10px] font-bold uppercase tracking-wider">Bajarilgan</span>
+                    <div className="flex items-end gap-2">
+                        <span className="text-2xl font-black text-gray-900 leading-none">12</span>
+                        <CheckCircle size={16} className="text-green-500 mb-1" />
+                    </div>
+                </div>
+                <div className="bg-white rounded-3xl p-5 shadow-xl shadow-black/[0.03] border border-gray-50 flex flex-col gap-1">
+                    <span className="text-gray-400 text-[10px] font-bold uppercase tracking-wider">Reyting</span>
+                    <div className="flex items-end gap-2">
+                        <span className="text-2xl font-black text-gray-900 leading-none">4.9</span>
+                        <Star size={16} className="text-amber-400 fill-amber-400 mb-1" />
+                    </div>
+                </div>
+            </div>
+
+            {/* Content Section */}
+            <div className="px-6 py-8">
+                <div className="flex justify-between items-center mb-6">
+                    <h2 className="font-black text-gray-900 text-lg tracking-tight flex items-center gap-2">
+                        <div className="w-2 h-6 bg-primary rounded-full"></div>
+                        Faol buyurtmalar
+                    </h2>
+                    <span className="text-[10px] font-black bg-gray-100 text-gray-400 px-3 py-1 rounded-full uppercase tracking-widest">
+                        {orders.length} ta
+                    </span>
+                </div>
 
                 {loading ? (
-                    <div className="space-y-3">
-                        <div className="h-32 bg-gray-200 rounded-2xl animate-pulse"></div>
-                        <div className="h-32 bg-gray-200 rounded-2xl animate-pulse"></div>
+                    <div className="space-y-4">
+                        {[1, 2].map(i => (
+                            <div key={i} className="h-44 bg-gray-200/50 rounded-[2.5rem] animate-pulse"></div>
+                        ))}
                     </div>
                 ) : (
-                    <div className="flex flex-col gap-3">
+                    <div className="flex flex-col gap-4">
                         {orders.length === 0 ? (
-                            <div className="bg-white p-6 rounded-2xl text-center border border-gray-100">
-                                <p className="text-gray-500 text-sm">Hozircha yangi buyurtmalar yo'q</p>
+                            <div className="bg-white p-12 rounded-[2.5rem] text-center border border-gray-100 shadow-sm">
+                                <div className="w-16 h-16 bg-gray-50 rounded-full flex items-center justify-center mx-auto mb-4">
+                                    <Clock className="text-gray-200" size={32} />
+                                </div>
+                                <p className="text-gray-400 text-sm font-medium">Yangi buyurtmalar kutilmoqda...</p>
                             </div>
                         ) : (
                             orders.map(order => (
-                                <div key={order._id} className="bg-white p-4 rounded-2xl border border-gray-100 shadow-sm flex flex-col gap-3">
+                                <div key={order._id} className="bg-white p-6 rounded-[2.5rem] border border-gray-50 shadow-xl shadow-black/[0.02] flex flex-col gap-4">
                                     <div className="flex justify-between items-start">
-                                        <div>
-                                            <h3 className="font-bold text-gray-800 text-sm">{order.serviceDetails.name}</h3>
-                                            <p className="text-xs text-gray-500 mt-1">{new Date(order.appointmentTime).toLocaleString('uz-UZ')}</p>
+                                        <div className="flex-1">
+                                            <div className="flex items-center gap-2 mb-1.5">
+                                                <div className="w-2 h-2 rounded-full bg-primary/40"></div>
+                                                <h3 className="font-black text-gray-900 text-base leading-tight truncate">{order.serviceDetails?.name}</h3>
+                                            </div>
+                                            <div className="flex items-center gap-2 text-gray-400">
+                                                <Clock size={12} />
+                                                <span className="text-[11px] font-bold uppercase tracking-wider">
+                                                    {new Date(order.appointmentTime).toLocaleString('uz-UZ', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' })}
+                                                </span>
+                                            </div>
                                         </div>
                                         {getStatusBadge(order.status)}
                                     </div>
 
-                                    <div className="bg-gray-50 p-2.5 rounded-xl text-xs flex flex-col gap-1.5">
-                                        {order.client && (
-                                            <div className="flex justify-between">
-                                                <span className="text-gray-500">Mijoz ID:</span>
-                                                <span className="font-medium text-gray-800">{order.clientId || 'Yashirin'}</span>
+                                    <div className="bg-gray-50/50 border border-gray-100 p-4 rounded-3xl flex flex-col gap-3">
+                                        <div className="flex items-center gap-3">
+                                            <div className="w-8 h-8 bg-white border border-gray-100 rounded-xl flex items-center justify-center text-xs font-black text-primary">
+                                                ID
                                             </div>
-                                        )}
-                                        <div className="flex justify-between">
-                                            <span className="text-gray-500">Manzil:</span>
-                                            <span className="font-medium text-gray-800 text-right max-w-[60%] truncate" title={order.location?.address}>{order.location?.address}</span>
+                                            <div className="flex flex-col">
+                                                <span className="text-[9px] font-black text-gray-400 uppercase tracking-widest leading-none mb-1">Mijoz kodi</span>
+                                                <span className="text-xs font-bold text-gray-800">{order.clientId?.toString().slice(-8) || 'Yashirin'}</span>
+                                            </div>
                                         </div>
-                                        <div className="flex justify-between mt-1 pt-1 border-t border-gray-200">
-                                            <span className="text-gray-500">Narx:</span>
-                                            <span className="font-bold text-primary">{order.serviceDetails.price.toLocaleString()} so'm</span>
+                                        <div className="flex items-center gap-3">
+                                            <div className="w-8 h-8 bg-white border border-gray-100 rounded-xl flex items-center justify-center text-primary">
+                                                <MapPin size={16} />
+                                            </div>
+                                            <div className="flex flex-col flex-1 overflow-hidden">
+                                                <span className="text-[9px] font-black text-gray-400 uppercase tracking-widest leading-none mb-1">Xizmat manzili</span>
+                                                <span className="text-xs font-bold text-gray-800 truncate">{order.location?.address}</span>
+                                            </div>
                                         </div>
                                     </div>
 
-                                    {order.status === 'pending' && (
-                                        <div className="flex gap-2 mt-1">
-                                            <button onClick={() => handleUpdateStatus(order._id, 'accepted')} className="flex-1 py-2 bg-primary text-white text-xs font-bold rounded-xl flex justify-center items-center gap-1">
-                                                <CheckCircle size={14} /> Qabul qilish
+                                    <div className="flex items-center justify-between px-2">
+                                        <span className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Narxi</span>
+                                        <span className="text-lg font-black text-primary">{order.price?.toLocaleString()} <span className="text-[10px] font-bold ml-0.5">SO'M</span></span>
+                                    </div>
+
+                                    <div className="flex gap-3 mt-2">
+                                        {order.status === 'pending' && (
+                                            <>
+                                                <button onClick={() => handleUpdateStatus(order._id, 'accepted')} className="flex-2 py-4 bg-primary text-white text-xs font-black rounded-2xl flex justify-center items-center gap-2 shadow-lg shadow-primary/20 hover:brightness-110 transition-all">
+                                                    <CheckCircle size={16} /> QABUL QILISH
+                                                </button>
+                                                <button onClick={() => handleUpdateStatus(order._id, 'cancelled')} className="flex-1 py-4 bg-red-50 text-red-600 text-xs font-black rounded-2xl flex justify-center items-center gap-2 border border-red-100 hover:bg-red-100 transition-all">
+                                                    <XCircle size={16} /> RAD ETISH
+                                                </button>
+                                            </>
+                                        )}
+                                        {order.status === 'accepted' && (
+                                            <button onClick={() => handleUpdateStatus(order._id, 'completed')} className="w-full py-4 bg-green-500 text-white text-xs font-black rounded-2xl flex justify-center items-center gap-2 shadow-lg shadow-green-500/20 hover:bg-green-600 transition-all uppercase tracking-widest">
+                                                <CheckCircle size={18} /> Buyurtmani yopish
                                             </button>
-                                            <button onClick={() => handleUpdateStatus(order._id, 'cancelled')} className="flex-1 py-2 bg-red-50 text-red-600 text-xs font-bold rounded-xl flex justify-center items-center gap-1 border border-red-100">
-                                                <XCircle size={14} /> Rad etish
-                                            </button>
-                                        </div>
-                                    )}
-                                    {order.status === 'accepted' && (
-                                        <div className="flex gap-2 mt-1">
-                                            <button onClick={() => handleUpdateStatus(order._id, 'completed')} className="flex-1 py-2 bg-green-500 text-white text-xs font-bold rounded-xl flex justify-center items-center gap-1 shadow-md shadow-green-500/20 hover:bg-green-600">
-                                                <CheckCircle size={14} /> Yakunlash
-                                            </button>
-                                        </div>
-                                    )}
+                                        )}
+                                    </div>
                                 </div>
                             ))
                         )}
                     </div>
                 )}
             </div>
-
         </div>
     );
 };
 
-export default Dashboard;
+export default VendorDashboard;

@@ -66,12 +66,17 @@ if (BOT_TOKEN) {
         });
     });
 
-    bot.launch().then(() => console.log('Telegram Bot started.'));
+    bot.launch()
+        .then(() => console.log('Telegram Bot started.'))
+        .catch(err => {
+            console.error('Telegram Bot failed to start:', err.message);
+            console.warn('Backend server will continue running without bot functionality.');
+        });
 
     process.once('SIGINT', () => bot.stop('SIGINT'));
     process.once('SIGTERM', () => bot.stop('SIGTERM'));
 } else {
-    console.warn('BOT_TOKEN is not defined in .env! Telegram bot is NOT running. Please read implementation_plan.md and define it.');
+    console.warn('BOT_TOKEN is not defined in .env! Telegram bot is NOT running.');
 }
 
 module.exports = bot;

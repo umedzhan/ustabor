@@ -191,6 +191,23 @@ app.get('/api/vendor/profile', authMiddleware.verifyToken, async (req, res) => {
     }
 });
 
+// Get reviews for a specific vendor
+app.get('/api/vendors/:id/reviews', async (req, res) => {
+    try {
+        const reviews = await Order.find({
+            vendorId: req.params.id,
+            status: 'evaluated'
+        })
+            .populate('clientId', 'name')
+            .sort({ updatedAt: -1 })
+            .limit(10);
+
+        res.json(reviews);
+    } catch (err) {
+        res.status(500).json({ error: 'Fikrlarni yuklashda xatolik' });
+    }
+});
+
 // Vendor: Update specific vendor's profile
 app.put('/api/vendor/profile', authMiddleware.verifyToken, async (req, res) => {
     try {
@@ -307,8 +324,54 @@ app.put('/api/orders/:id/status', authMiddleware.verifyToken, async (req, res) =
 
         res.json({ message: 'Order status updated', order });
     } catch (err) {
-        console.error("Order status update error:", err);
-        res.status(500).json({ error: 'Server error updating order status', details: err.message });
+        console.error("Status update failed:", err);
+        res.status(500).json({ error: 'Server error updating status', details: err.message });
+    }
+});
+
+// 8. Submit Review
+app.post('/api/orders/:id/review', authMiddleware.verifyToken, async (req, res) => {
+    try {
+        const { rating, comment } = req.body;
+        if (!rating || rating < 1 || rating > 5) {
+            return res.status(400).json({ error: 'Yaroqsiz reyting (1-5 bo\'lishi kerak)' });
+        }
+
+        const order = await Order.findById(req.params.id);
+        if (!order) return res.status(404).json({ error: 'Buyurtma topilmadi' });
+
+        // Security check: Only the client who placed the order can review it
+        if (order.clientId.toString() !== req.user.id) {
+            return res.status(403).json({ error: 'Ruxsat berilmagan' });
+        }
+
+        // Allow reviewing if completed or already evaluated (to update)
+        if (order.status !== 'completed' && order.status !== 'evaluated') {
+            return res.status(400).json({ error: 'Faqat yakunlangan buyurtmalarga fikr qoldirish mumkin' });
+        }
+
+        order.review = { rating, comment };
+        order.status = 'evaluated';
+        await order.save();
+
+        // Update VendorProfile Aggregate Rating
+        const vendorProfile = await VendorProfile.findOne({ userId: order.vendorId });
+        if (vendorProfile) {
+            const evaluatedOrders = await Order.find({
+                vendorId: order.vendorId,
+                status: 'evaluated'
+            });
+
+            const totalRating = evaluatedOrders.reduce((acc, curr) => acc + (curr.review?.rating || 0), 0);
+            vendorProfile.reviewCount = evaluatedOrders.length;
+            vendorProfile.rating = Number((totalRating / evaluatedOrders.length).toFixed(1));
+            await vendorProfile.save();
+        }
+
+        res.json({ message: 'Fikr muvaffaqiyatli qabul qilindi', order });
+    } catch (err) {
+        console.error("Review failed:", err);
+        res.status(500).json({ error: 'Fikr yuborishda xatolik yuz berdi' });
     }
 });
 
@@ -378,6 +441,38 @@ app.put('/api/admin/vendors/:id/verify', authMiddleware.verifyAdmin, async (req,
         res.json({ message: `Vendor status updated to ${status}`, vendor });
     } catch (err) {
         res.status(500).json({ error: 'Verification failed' });
+    }
+});
+
+// Admin: Get Dashboard Stats
+app.get('/api/admin/stats', authMiddleware.verifyAdmin, async (req, res) => {
+    try {
+        const totalUsers = await User.countDocuments({ role: 'client' });
+        const totalVendors = await User.countDocuments({ role: 'vendor' });
+        const totalOrders = await Order.countDocuments();
+
+        const recentOrders = await Order.find()
+            .populate('clientId', 'name')
+            .populate('vendorId', 'userId')
+            .sort({ createdAt: -1 })
+            .limit(5);
+
+        const recentReviews = await Order.find({ status: 'evaluated' })
+            .populate('clientId', 'name')
+            .sort({ updatedAt: -1 })
+            .limit(5);
+
+        res.json({
+            stats: {
+                totalUsers,
+                totalVendors,
+                totalOrders
+            },
+            recentOrders,
+            recentReviews
+        });
+    } catch (err) {
+        res.status(500).json({ error: 'Failed to fetch admin stats' });
     }
 });
 

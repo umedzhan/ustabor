@@ -2,6 +2,7 @@ import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-d
 import Home from './pages/Home';
 import ProfessionalProfile from './pages/ProfessionalProfile';
 import OrderFlow from './pages/Client/OrderFlow';
+import Orders from './pages/Client/Orders';
 import Chat from './pages/Client/Chat';
 import Dashboard from './pages/Vendor/Dashboard';
 import VendorRegister from './pages/Vendor/Register';
@@ -40,8 +41,17 @@ function App() {
               <Route path="/vendor/:id/book" element={
                 user ? <OrderFlow /> : <Navigate to="/" />
               } />
+              <Route path="/orders" element={
+                user ? <Orders /> : <Navigate to="/" />
+              } />
               <Route path="/chat/:id" element={
                 user ? <Chat /> : <Navigate to="/" />
+              } />
+              <Route path="/chats" element={
+                user ? <div className="p-10 text-center">Chatlar ro'yxati (Tez kunda)</div> : <Navigate to="/" />
+              } />
+              <Route path="/profile" element={
+                user ? <div className="p-10 text-center">Profil ma'lumotlari (Tez kunda)</div> : <Navigate to="/" />
               } />
 
               {/* Vendor Routes */}

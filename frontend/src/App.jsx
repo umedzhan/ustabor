@@ -13,8 +13,18 @@ import Profile from './pages/Profile';
 import SelectRole from './pages/SelectRole';
 import BottomNav from './components/BottomNav';
 import { useAuth } from './context/AuthContext';
+import { LanguageProvider } from './context/LanguageContext';
+import LanguageSwitcher from './components/LanguageSwitcher';
 
 function App() {
+  return (
+    <LanguageProvider>
+      <AppContent />
+    </LanguageProvider>
+  );
+}
+
+function AppContent() {
   const { user, loading } = useAuth();
 
   if (loading) {
@@ -77,6 +87,7 @@ function App() {
           )}
         </Routes>
         <BottomNav />
+        <LanguageSwitcher />
       </div>
     </Router>
   );

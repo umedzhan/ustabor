@@ -12,6 +12,7 @@ const Admin = () => {
     const [stats, setStats] = useState(null);
     const [categories, setCategories] = useState([]);
     const [pendingVendors, setPendingVendors] = useState([]);
+    const [allVendors, setAllVendors] = useState([]);
     const [broadcastMsg, setBroadcastMsg] = useState('');
     const [broadcastTarget, setBroadcastTarget] = useState('all');
 
@@ -40,6 +41,7 @@ const Admin = () => {
             fetchStats();
             fetchCategories();
             fetchPendingVendors();
+            fetchAllVendors();
         }
     }, [token, user]);
 
@@ -66,6 +68,15 @@ const Admin = () => {
                 headers: { Authorization: `Bearer ${token}` }
             });
             setPendingVendors(data);
+        } catch (err) { console.error(err); }
+    };
+
+    const fetchAllVendors = async () => {
+        try {
+            const { data } = await axios.get(`${API_URL}/admin/vendors`, {
+                headers: { Authorization: `Bearer ${token}` }
+            });
+            setAllVendors(data);
         } catch (err) { console.error(err); }
     };
 
@@ -131,6 +142,7 @@ const Admin = () => {
             <div className="flex gap-2 mb-6 overflow-x-auto pb-2 no-scrollbar">
                 <button onClick={() => setActiveTab('dashboard')} className={`px-4 py-2.5 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all whitespace-nowrap shadow-sm border ${activeTab === 'dashboard' ? 'bg-primary text-white border-primary' : 'bg-white text-gray-400 border-gray-100'}`}>Monitor</button>
                 <button onClick={() => setActiveTab('moderation')} className={`px-4 py-2.5 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all whitespace-nowrap shadow-sm border ${activeTab === 'moderation' ? 'bg-primary text-white border-primary' : 'bg-white text-gray-400 border-gray-100'}`}>Moderatsiya ({pendingVendors.length})</button>
+                <button onClick={() => setActiveTab('masters')} className={`px-4 py-2.5 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all whitespace-nowrap shadow-sm border ${activeTab === 'masters' ? 'bg-primary text-white border-primary' : 'bg-white text-gray-400 border-gray-100'}`}>Ustalar ({allVendors.length})</button>
                 <button onClick={() => setActiveTab('add')} className={`px-4 py-2.5 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all whitespace-nowrap shadow-sm border ${activeTab === 'add' ? 'bg-primary text-white border-primary' : 'bg-white text-gray-400 border-gray-100'}`}>Usta qo'shish</button>
                 <button onClick={() => setActiveTab('broadcast')} className={`px-4 py-2.5 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all whitespace-nowrap shadow-sm border ${activeTab === 'broadcast' ? 'bg-primary text-white border-primary' : 'bg-white text-gray-400 border-gray-100'}`}>Broadcast</button>
             </div>
@@ -218,6 +230,47 @@ const Admin = () => {
                 </div>
             )}
 
+            {activeTab === 'masters' && (
+                <div className="flex flex-col gap-4">
+                    {allVendors.length === 0 ? (
+                        <div className="text-center p-14 bg-white rounded-[2.5rem] text-gray-400 text-xs font-bold border border-gray-100 shadow-sm">Ustalar yo'q</div>
+                    ) : (
+                        allVendors.map(v => (
+                            <div key={v._id} className="bg-white p-5 rounded-[2rem] shadow-sm border border-gray-100 flex items-center gap-4">
+                                <div className="w-16 h-16 rounded-2xl overflow-hidden bg-gray-50 border border-gray-100 relative shrink-0">
+                                    {v.profilePicture ? (
+                                        <img src={v.profilePicture} alt="" className="w-full h-full object-cover" />
+                                    ) : v.portfolio?.length > 0 ? (
+                                        <img src={v.portfolio[0]} alt="" className="w-full h-full object-cover" />
+                                    ) : (
+                                        <div className="w-full h-full flex items-center justify-center text-primary/20 font-black text-xl">{v.userId?.name?.charAt(0)}</div>
+                                    )}
+                                    <div className={`absolute bottom-1 right-1 w-3 h-3 rounded-full border-2 border-white shadow-sm ${v.isOnline ? 'bg-green-500 animate-pulse' : 'bg-gray-300'}`}></div>
+                                </div>
+                                <div className="flex-1 min-w-0">
+                                    <div className="flex justify-between items-start">
+                                        <h3 className="font-black text-sm text-gray-900 truncate">{v.userId?.name}</h3>
+                                        <span className={`text-[8px] font-black px-2 py-0.5 rounded-md uppercase tracking-tighter ${v.verificationStatus === 'approved' ? 'bg-green-50 text-green-500' : 'bg-amber-50 text-amber-500'}`}>
+                                            {v.verificationStatus}
+                                        </span>
+                                    </div>
+                                    <p className="text-[10px] text-primary font-black uppercase tracking-widest mt-0.5">{v.category?.name}</p>
+                                    <div className="flex items-center gap-3 mt-2">
+                                        <div className="flex items-center gap-1">
+                                            <span className="text-[10px] font-bold text-gray-400">Reyting:</span>
+                                            <span className="text-[10px] font-black text-gray-900">{v.rating?.toFixed(1) || '5.0'}</span>
+                                        </div>
+                                        <div className="flex items-center gap-1">
+                                            <span className="text-[10px] font-bold text-gray-400">Status:</span>
+                                            <span className={`text-[10px] font-black ${v.isOnline ? 'text-green-500' : 'text-gray-400'}`}>{v.isOnline ? 'Online' : 'Offline'}</span>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        ))
+                    )}
+                </div>
+            )}
             {activeTab === 'add' && (
                 <form onSubmit={handleSubmit} className="bg-white p-8 rounded-[2.5rem] flex flex-col gap-5 shadow-sm border border-gray-100">
                     <div className="space-y-1">

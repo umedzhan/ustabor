@@ -24,6 +24,7 @@ const VendorProfileSchema = new mongoose.Schema({
     verificationStatus: { type: String, enum: ['pending', 'approved', 'rejected'], default: 'pending' },
     documents: [{ type: String }], // URLs to documents
     aboutText: { type: String },
+    profilePicture: { type: String },
     portfolio: [{ type: String }] // URLs to portfolio images
 }, { timestamps: true });
 

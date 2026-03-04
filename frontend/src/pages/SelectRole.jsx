@@ -1,15 +1,17 @@
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
 import { User, Briefcase, Shield, ChevronRight, Sparkles } from 'lucide-react';
+import { useLanguage } from '../context/LanguageContext';
 
 const SelectRole = () => {
     const navigate = useNavigate();
+    const { t } = useLanguage();
 
     const roles = [
         {
             id: 'client',
-            title: 'Mijoz',
-            subtitle: 'Xizmatlardan foydalanish',
+            title: t('mijoz'),
+            subtitle: t('mijoz_sub'),
             icon: <User size={32} />,
             color: 'bg-blue-500',
             bg: 'bg-blue-50',
@@ -17,8 +19,8 @@ const SelectRole = () => {
         },
         {
             id: 'vendor',
-            title: 'Usta',
-            subtitle: 'Buyurtmalar qabul qilish',
+            title: t('usta'),
+            subtitle: t('usta_sub'),
             icon: <Briefcase size={32} />,
             color: 'bg-primary',
             bg: 'bg-indigo-50',
@@ -26,8 +28,8 @@ const SelectRole = () => {
         },
         {
             id: 'admin',
-            title: 'Admin',
-            subtitle: 'Tizimni boshqarish',
+            title: t('admin'),
+            subtitle: t('admin_sub'),
             icon: <Shield size={32} />,
             color: 'bg-red-500',
             bg: 'bg-red-50',
@@ -46,8 +48,8 @@ const SelectRole = () => {
                     <Sparkles size={40} className="text-primary animate-pulse" />
                 </div>
 
-                <h1 className="text-3xl font-black text-gray-900 tracking-tighter mb-2 text-center">Xush kelibsiz!</h1>
-                <p className="text-sm font-bold text-gray-400 uppercase tracking-widest mb-12 text-center">Loyihaga qaysi rolda kirasiz?</p>
+                <h1 className="text-3xl font-black text-gray-900 tracking-tighter mb-2 text-center">{t('welcome')}</h1>
+                <p className="text-sm font-bold text-gray-400 uppercase tracking-widest mb-12 text-center">{t('choose_role')}</p>
 
                 <div className="w-full flex flex-col gap-5">
                     {roles.map((role, index) => (

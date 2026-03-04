@@ -2,9 +2,11 @@ import React from 'react';
 import { NavLink } from 'react-router-dom';
 import { Home, ClipboardList, Megaphone, Settings, LayoutDashboard, CheckCircle, Wallet, User, Clock, MessageCircle } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
+import { useLanguage } from '../context/LanguageContext';
 
 const BottomNav = () => {
     const { user } = useAuth();
+    const { t } = useLanguage();
 
     if (!user || (user && !user.onboarded && user.role !== 'admin')) return null;
 
@@ -14,15 +16,15 @@ const BottomNav = () => {
                 <>
                     <NavLink to="/admin" className={({ isActive }) => `flex flex-col items-center gap-1 p-2 ${isActive ? 'text-primary' : 'text-gray-400'}`}>
                         <LayoutDashboard size={24} />
-                        <span className="text-[10px] font-bold">Monitor</span>
+                        <span className="text-[10px] font-bold">{t('monitor')}</span>
                     </NavLink>
                     <NavLink to="/admin?tab=moderation" className={({ isActive }) => `flex flex-col items-center gap-1 p-2 ${isActive ? 'text-primary' : 'text-gray-400'}`}>
                         <ClipboardList size={24} />
-                        <span className="text-[10px] font-bold">Arizalar</span>
+                        <span className="text-[10px] font-bold">{t('arizalar')}</span>
                     </NavLink>
                     <NavLink to="/admin?tab=broadcast" className={({ isActive }) => `flex flex-col items-center gap-1 p-2 ${isActive ? 'text-primary' : 'text-gray-400'}`}>
                         <Megaphone size={24} />
-                        <span className="text-[10px] font-bold">Broadcast</span>
+                        <span className="text-[10px] font-bold">{t('broadcast')}</span>
                     </NavLink>
                     <NavLink to="/profile" className={({ isActive }) => `flex flex-col items-center gap-1 p-2 ${isActive ? 'text-primary' : 'text-gray-400'}`}>
                         <User size={24} />
@@ -37,15 +39,15 @@ const BottomNav = () => {
                 <>
                     <NavLink to="/" className={({ isActive }) => `flex flex-col items-center gap-1 p-2 ${isActive ? 'text-primary' : 'text-gray-400'}`}>
                         <Home size={24} />
-                        <span className="text-[10px] font-bold">Asosiy</span>
+                        <span className="text-[10px] font-bold">{t('asosiy')}</span>
                     </NavLink>
                     <NavLink to="/vendor/dashboard" className={({ isActive }) => `flex flex-col items-center gap-1 p-2 ${isActive ? 'text-primary' : 'text-gray-400'}`}>
                         <LayoutDashboard size={24} />
-                        <span className="text-[10px] font-bold">Panel</span>
+                        <span className="text-[10px] font-bold">{t('panel')}</span>
                     </NavLink>
                     <NavLink to="/orders" className={({ isActive }) => `flex flex-col items-center gap-1 p-2 ${isActive ? 'text-primary' : 'text-gray-400'}`}>
                         <Clock size={24} />
-                        <span className="text-[10px] font-bold">Buyurtmalar</span>
+                        <span className="text-[10px] font-bold">{t('orders')}</span>
                     </NavLink>
                     <NavLink to="/profile" className={({ isActive }) => `flex flex-col items-center gap-1 p-2 ${isActive ? 'text-primary' : 'text-gray-400'}`}>
                         <User size={24} />
@@ -60,19 +62,19 @@ const BottomNav = () => {
             <>
                 <NavLink to="/" className={({ isActive }) => `flex flex-col items-center gap-1 p-2 ${isActive ? 'text-primary' : 'text-gray-400'}`}>
                     <Home size={24} />
-                    <span className="text-[10px] font-bold">Asosiy</span>
+                    <span className="text-[10px] font-bold">{t('asosiy')}</span>
                 </NavLink>
                 <NavLink to="/orders" className={({ isActive }) => `flex flex-col items-center gap-1 p-2 ${isActive ? 'text-primary' : 'text-gray-400'}`}>
                     <Clock size={24} />
-                    <span className="text-[10px] font-bold">Buyurtmalar</span>
+                    <span className="text-[10px] font-bold">{t('orders')}</span>
                 </NavLink>
                 <NavLink to="/chats" className={({ isActive }) => `flex flex-col items-center gap-1 p-2 ${isActive ? 'text-primary' : 'text-gray-400'}`}>
                     <MessageCircle size={24} />
-                    <span className="text-[10px] font-bold">Chatlar</span>
+                    <span className="text-[10px] font-bold">{t('chat')}</span>
                 </NavLink>
                 <NavLink to="/profile" className={({ isActive }) => `flex flex-col items-center gap-1 p-2 ${isActive ? 'text-primary' : 'text-gray-400'}`}>
                     <User size={24} />
-                    <span className="text-[10px] font-bold">Profil</span>
+                    <span className="text-[10px] font-bold">{t('profile')}</span>
                 </NavLink>
             </>
         );

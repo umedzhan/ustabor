@@ -7,11 +7,13 @@ import {
     AlertCircle, Sparkles
 } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
+import { useLanguage } from '../../context/LanguageContext';
 import axios from 'axios';
 import { API_URL } from '../../config';
 
 const VendorDashboard = () => {
     const { user } = useAuth();
+    const { t } = useLanguage();
     const navigate = useNavigate();
     const [orders, setOrders] = useState([]);
     const [loading, setLoading] = useState(true);
@@ -149,7 +151,7 @@ const VendorDashboard = () => {
                             <div className="w-10 h-10 bg-white/10 rounded-xl flex items-center justify-center text-white backdrop-blur-md">
                                 <Wallet size={20} />
                             </div>
-                            <span className="text-white/80 text-[10px] font-black uppercase tracking-widest">Sizning balansingiz</span>
+                            <span className="text-white/80 text-[10px] font-black uppercase tracking-widest">{t('balance')}</span>
                         </div>
                         <button onClick={() => navigate('/vendor/profile')} className="p-2 bg-white/10 rounded-xl text-white/60 hover:text-white transition-colors">
                             <Settings size={20} />
@@ -168,7 +170,7 @@ const VendorDashboard = () => {
                             </div>
                         </div>
                         <button className="bg-white text-primary px-8 py-4 rounded-[1.8rem] text-xs font-black shadow-2xl shadow-black/10 hover:scale-105 active:scale-95 transition-all flex items-center gap-2 uppercase tracking-widest">
-                            Yechib olish <ChevronRight size={14} />
+                            {t('withdraw')} <ChevronRight size={14} />
                         </button>
                     </div>
                 </div>
@@ -184,7 +186,7 @@ const VendorDashboard = () => {
                         <span className="text-2xl font-black text-gray-900 leading-none">
                             {orders.filter(o => o.status === 'completed' || o.status === 'evaluated').length}
                         </span>
-                        <span className="text-[10px] font-black text-gray-400 uppercase tracking-widest mt-1">Yopilgan</span>
+                        <span className="text-[10px] font-black text-gray-400 uppercase tracking-widest mt-1">{t('completed_orders')}</span>
                     </div>
                 </div>
                 <div className="bg-white rounded-[2.5rem] p-6 shadow-2xl shadow-black/[0.04] border border-gray-50 flex flex-col gap-3 group hover:border-amber-100 transition-all">
@@ -195,7 +197,7 @@ const VendorDashboard = () => {
                         <span className="text-2xl font-black text-gray-900 leading-none">
                             {Number(vendorProfile?.rating || 5.0).toFixed(1)}
                         </span>
-                        <span className="text-[10px] font-black text-gray-400 uppercase tracking-widest mt-1">Reytingingiz</span>
+                        <span className="text-[10px] font-black text-gray-400 uppercase tracking-widest mt-1">{t('rating')}</span>
                     </div>
                 </div>
             </div>
@@ -206,7 +208,7 @@ const VendorDashboard = () => {
                     <div className="flex flex-col">
                         <h2 className="font-black text-gray-900 text-xl tracking-tight flex items-center gap-3">
                             <div className="w-2.5 h-8 bg-primary rounded-full shadow-[0_0_15px_rgba(var(--primary-rgb),0.3)]"></div>
-                            Faol loyihalar
+                            {t('active_projects')}
                         </h2>
                         <p className="text-[10px] text-gray-400 font-bold uppercase tracking-widest mt-1 ml-5">Hozirgi barcha ishlar</p>
                     </div>
@@ -232,8 +234,8 @@ const VendorDashboard = () => {
                                     <Clock size={40} className="animate-pulse" />
                                     <div className="absolute inset-x-0 bottom-0 top-0 bg-gradient-to-t from-white to-transparent opacity-50"></div>
                                 </div>
-                                <h3 className="text-gray-900 font-black text-lg mb-2">Hozircha bo'sh...</h3>
-                                <p className="text-gray-400 text-xs font-bold uppercase tracking-widest max-w-[200px] leading-relaxed">Yangi buyurtmalar kutilmoqda!</p>
+                                <h3 className="text-gray-900 font-black text-lg mb-2">{t('no_orders')}...</h3>
+                                <p className="text-gray-400 text-xs font-bold uppercase tracking-widest max-w-[200px] leading-relaxed">{t('new_order')}</p>
                             </div>
                         ) : (
                             orders.map((order, index) => (

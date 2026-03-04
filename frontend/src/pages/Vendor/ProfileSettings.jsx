@@ -8,10 +8,12 @@ import {
 } from 'lucide-react';
 import { API_URL } from '../../config';
 import { useAuth } from '../../context/AuthContext';
+import { useLanguage } from '../../context/LanguageContext';
 
 const ProfileSettings = () => {
     const navigate = useNavigate();
     const { user } = useAuth();
+    const { t } = useLanguage();
     const [loading, setLoading] = useState(true);
     const [saving, setSaving] = useState(false);
     const [statusMessage, setStatusMessage] = useState({ type: '', text: '' });
@@ -23,6 +25,7 @@ const ProfileSettings = () => {
         languages: [],
         workingHours: { start: '09:00', end: '18:00' },
         services: [],
+        profilePicture: '',
         portfolio: [],
         isOnline: false
     });
@@ -30,6 +33,7 @@ const ProfileSettings = () => {
     const [newService, setNewService] = useState({ name: '', price: '' });
     const [newImage, setNewImage] = useState('');
     const [newLanguage, setNewLanguage] = useState('');
+    const [uploading, setUploading] = useState(false);
 
     useEffect(() => {
         const fetchProfile = async () => {
@@ -46,18 +50,60 @@ const ProfileSettings = () => {
                     languages: data.languages || [],
                     workingHours: data.workingHours || { start: '09:00', end: '18:00' },
                     services: data.services || [],
+                    profilePicture: data.profilePicture || '',
                     portfolio: data.portfolio || [],
                     isOnline: data.isOnline || false
                 });
             } catch (error) {
                 console.error("Error fetching profile", error);
-                setStatusMessage({ type: 'error', text: 'Profil ma\'lumotlarini yuklashda xatolik' });
+                // If 404, it just means profile not created yet, no need for scary error
+                if (error.response?.status === 404) {
+                    setStatusMessage({ type: 'error', text: 'Profil hali yaratilmagan. Iltimos, ma\'lumotlarni kiriting va saqlang.' });
+                } else {
+                    setStatusMessage({ type: 'error', text: 'Profil ma\'lumotlarini yuklashda xatolik yuz berdi' });
+                }
             } finally {
                 setLoading(false);
             }
         };
         fetchProfile();
     }, []);
+
+    const handleFileUpload = async (e, type = 'portfolio') => {
+        const file = e.target.files[0];
+        if (!file) return;
+
+        setUploading(true);
+        setStatusMessage({ type: '', text: '' });
+
+        const uploadFormData = new FormData();
+        uploadFormData.append('image', file);
+
+        try {
+            const token = localStorage.getItem('token');
+            const { data } = await axios.post(`${API_URL}/upload`, uploadFormData, {
+                headers: {
+                    Authorization: `Bearer ${token}`,
+                    'Content-Type': 'multipart/form-data'
+                }
+            });
+
+            if (type === 'profilePicture') {
+                setFormData(prev => ({ ...prev, profilePicture: data.url }));
+            } else {
+                setFormData(prev => ({
+                    ...prev,
+                    portfolio: [...prev.portfolio, data.url]
+                }));
+            }
+            setStatusMessage({ type: 'success', text: 'Rasm muvaffaqiyatli yuklandi!' });
+        } catch (error) {
+            console.error("Upload error", error);
+            setStatusMessage({ type: 'error', text: error.response?.data?.error || 'Rasm yuklashda xatolik yuz berdi' });
+        } finally {
+            setUploading(false);
+        }
+    };
 
     const handleSave = async () => {
         setSaving(true);
@@ -148,14 +194,14 @@ const ProfileSettings = () => {
                         <ArrowLeft size={24} className="text-gray-900" />
                     </button>
                     <div className="ml-2">
-                        <h1 className="text-lg font-black text-gray-900 leading-none">Profil tahriri</h1>
-                        <p className="text-[10px] text-gray-400 font-bold uppercase tracking-widest mt-1">Professional ma'lumotlar</p>
+                        <h1 className="text-lg font-black text-gray-900 leading-none">{t('edit_profile')}</h1>
+                        <p className="text-[10px] text-gray-400 font-bold uppercase tracking-widest mt-1">{t('professional_info')}</p>
                     </div>
                 </div>
 
                 <div className={`flex items-center gap-2 px-3 py-1.5 rounded-full border transition-all ${formData.isOnline ? 'bg-green-50 border-green-100 text-green-600' : 'bg-gray-50 border-gray-100 text-gray-400'}`}>
                     <span className={`w-2 h-2 rounded-full ${formData.isOnline ? 'bg-green-500 animate-pulse' : 'bg-gray-400'}`}></span>
-                    <span className="text-[10px] font-black uppercase tracking-tight">{formData.isOnline ? 'Onlayn' : 'Oflayn'}</span>
+                    <span className="text-[10px] font-black uppercase tracking-tight">{formData.isOnline ? t('online') : t('offline')}</span>
                     <button
                         onClick={() => setFormData({ ...formData, isOnline: !formData.isOnline })}
                         className={`ml-1 w-8 h-4 rounded-full relative transition-colors ${formData.isOnline ? 'bg-green-500' : 'bg-gray-300'}`}
@@ -181,16 +227,33 @@ const ProfileSettings = () => {
                     <div className="absolute -bottom-10 -left-10 w-32 h-32 bg-white/5 rounded-full blur-2xl"></div>
 
                     <div className="relative z-10 flex flex-col items-center">
-                        <div className="w-28 h-28 bg-white/20 backdrop-blur-md rounded-[2.5rem] p-1.5 border border-white/30 shadow-2xl mb-4 group cursor-pointer relative overflow-visible">
+                        <div
+                            onClick={() => document.getElementById('file-upload').click()}
+                            className="w-28 h-28 bg-white/20 backdrop-blur-md rounded-[2.5rem] p-1.5 border border-white/30 shadow-2xl mb-4 group cursor-pointer relative overflow-visible transition-all hover:scale-105 active:scale-95"
+                        >
+                            <input
+                                id="file-upload"
+                                type="file"
+                                className="hidden"
+                                onChange={(e) => handleFileUpload(e, 'profilePicture')}
+                                accept="image/*"
+                            />
                             <div className="w-full h-full bg-white rounded-[2rem] flex items-center justify-center overflow-hidden">
-                                {formData.portfolio && formData.portfolio.length > 0 ? (
+                                {formData.profilePicture ? (
+                                    <img src={formData.profilePicture} alt="avatar" className="w-full h-full object-cover" />
+                                ) : formData.portfolio && formData.portfolio.length > 0 ? (
                                     <img src={formData.portfolio[0]} alt="avatar" className="w-full h-full object-cover" />
                                 ) : (
                                     <span className="text-primary font-black text-4xl">{user?.name?.charAt(0) || 'U'}</span>
                                 )}
+                                {uploading && (
+                                    <div className="absolute inset-0 bg-black/40 backdrop-blur-sm flex items-center justify-center">
+                                        <div className="w-6 h-6 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+                                    </div>
+                                )}
                             </div>
-                            <div className="absolute -bottom-1 -right-1 w-10 h-10 bg-white text-primary rounded-2xl flex items-center justify-center shadow-xl border-4 border-primary">
-                                <ImageIcon size={18} />
+                            <div className="absolute -bottom-1 -right-1 w-10 h-10 bg-white text-primary rounded-2xl flex items-center justify-center shadow-xl border-4 border-primary group-hover:bg-primary group-hover:text-white transition-all">
+                                <Plus size={18} />
                             </div>
                         </div>
                         <h2 className="text-2xl font-black tracking-tight">{user?.name}</h2>
@@ -209,12 +272,12 @@ const ProfileSettings = () => {
                             <div className="w-8 h-8 bg-blue-50 text-blue-500 rounded-xl flex items-center justify-center">
                                 <MessageSquare size={16} />
                             </div>
-                            <h2 className="text-xs font-black text-gray-400 uppercase tracking-widest">Asosiy ma'lumotlar</h2>
+                            <h2 className="text-xs font-black text-gray-400 uppercase tracking-widest">{t('professional_info')}</h2>
                         </div>
 
                         <div className="space-y-5">
                             <div className="group">
-                                <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest ml-1 mb-2 block group-focus-within:text-primary transition-colors">Yashash manzilingiz</label>
+                                <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest ml-1 mb-2 block group-focus-within:text-primary transition-colors">{t('location')}</label>
                                 <div className="relative">
                                     <MapPin className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-300 group-focus-within:text-primary transition-colors" size={18} />
                                     <input
@@ -222,19 +285,19 @@ const ProfileSettings = () => {
                                         className="w-full bg-gray-50 border border-gray-100 rounded-2xl p-4 pl-12 text-sm font-bold text-gray-800 outline-none focus:ring-4 focus:ring-primary/10 transition-all"
                                         value={formData.location}
                                         onChange={(e) => setFormData({ ...formData, location: e.target.value })}
-                                        placeholder="Shahar, tuman, ko'cha..."
+                                        placeholder={t('city_district_street_placeholder')}
                                     />
                                 </div>
                             </div>
 
                             <div>
-                                <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest ml-1 mb-2 block">O'zingiz haqingizda (Bio)</label>
+                                <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest ml-1 mb-2 block">{t('bio')}</label>
                                 <textarea
                                     rows="5"
                                     className="w-full bg-gray-50 border border-gray-100 rounded-2xl p-4 text-sm font-bold text-gray-800 outline-none focus:ring-4 focus:ring-primary/10 transition-all resize-none leading-relaxed"
                                     value={formData.aboutText}
                                     onChange={(e) => setFormData({ ...formData, aboutText: e.target.value })}
-                                    placeholder="Tajribangiz va mijozlarga foydangiz haqida yozing..."
+                                    placeholder={t('bio_placeholder')}
                                 />
                             </div>
                         </div>
@@ -246,18 +309,18 @@ const ProfileSettings = () => {
                             <div className="w-8 h-8 bg-amber-50 text-amber-500 rounded-xl flex items-center justify-center">
                                 <Briefcase size={16} />
                             </div>
-                            <h2 className="text-xs font-black text-gray-400 uppercase tracking-widest">Tajriba va Ko'nikmalar</h2>
+                            <h2 className="text-xs font-black text-gray-400 uppercase tracking-widest">{t('experience_and_skills')}</h2>
                         </div>
 
                         <div className="grid grid-cols-1 gap-6">
                             <div>
-                                <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest ml-1 mb-2 block">Xizmat tajribasi (yil)</label>
+                                <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest ml-1 mb-2 block">{t('experience')}</label>
                                 <div className="flex items-center gap-4 bg-gray-50 p-4 rounded-2xl border border-gray-100">
                                     <button
                                         onClick={() => setFormData({ ...formData, experienceYears: Math.max(0, formData.experienceYears - 1) })}
                                         className="w-10 h-10 bg-white border border-gray-100 rounded-xl flex items-center justify-center text-gray-500 hover:bg-gray-100 active:scale-90"
                                     >-</button>
-                                    <span className="flex-1 text-center font-black text-lg text-gray-800">{formData.experienceYears} yil</span>
+                                    <span className="flex-1 text-center font-black text-lg text-gray-800">{formData.experienceYears} {t('years')}</span>
                                     <button
                                         onClick={() => setFormData({ ...formData, experienceYears: formData.experienceYears + 1 })}
                                         className="w-10 h-10 bg-white border border-gray-100 rounded-xl flex items-center justify-center text-gray-500 hover:bg-gray-100 active:scale-90"
@@ -266,7 +329,7 @@ const ProfileSettings = () => {
                             </div>
 
                             <div>
-                                <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest ml-1 mb-3 block">Biladigan tillaringiz</label>
+                                <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest ml-1 mb-3 block">{t('languages')}</label>
                                 <div className="flex flex-wrap gap-2 mb-4">
                                     {formData.languages.map(lang => (
                                         <div key={lang} className="bg-blue-50 text-blue-600 px-4 py-2 rounded-xl text-xs font-black flex items-center gap-2 border border-blue-100 animate-scale-in">
@@ -280,7 +343,7 @@ const ProfileSettings = () => {
                                         <Globe className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-300" size={16} />
                                         <input
                                             type="text"
-                                            placeholder="Til qo'shish (masalan: O'zbek)"
+                                            placeholder={t('add_language_placeholder')}
                                             className="w-full bg-gray-50 border border-gray-100 rounded-xl p-3 pl-11 text-xs font-bold outline-none focus:ring-4 focus:ring-primary/10"
                                             value={newLanguage}
                                             onChange={(e) => setNewLanguage(e.target.value)}
@@ -301,12 +364,12 @@ const ProfileSettings = () => {
                             <div className="w-8 h-8 bg-green-50 text-green-500 rounded-xl flex items-center justify-center">
                                 <Clock size={16} />
                             </div>
-                            <h2 className="text-xs font-black text-gray-400 uppercase tracking-widest">Ish vaqtlari</h2>
+                            <h2 className="text-xs font-black text-gray-400 uppercase tracking-widest">{t('working_hours')}</h2>
                         </div>
 
                         <div className="grid grid-cols-2 gap-4">
                             <div>
-                                <label className="text-[9px] font-black text-gray-400 uppercase tracking-widest ml-1 mb-2 block">Boshlanishi</label>
+                                <label className="text-[9px] font-black text-gray-400 uppercase tracking-widest ml-1 mb-2 block">{t('start_time')}</label>
                                 <input
                                     type="time"
                                     className="w-full bg-gray-50 border border-gray-100 rounded-xl p-4 text-sm font-bold text-gray-800 outline-none"
@@ -315,7 +378,7 @@ const ProfileSettings = () => {
                                 />
                             </div>
                             <div>
-                                <label className="text-[9px] font-black text-gray-400 uppercase tracking-widest ml-1 mb-2 block">Tugashi</label>
+                                <label className="text-[9px] font-black text-gray-400 uppercase tracking-widest ml-1 mb-2 block">{t('end_time')}</label>
                                 <input
                                     type="time"
                                     className="w-full bg-gray-50 border border-gray-100 rounded-xl p-4 text-sm font-bold text-gray-800 outline-none"
@@ -333,9 +396,9 @@ const ProfileSettings = () => {
                                 <div className="w-8 h-8 bg-purple-50 text-purple-500 rounded-xl flex items-center justify-center">
                                     <Save size={16} />
                                 </div>
-                                <h2 className="text-xs font-black text-gray-400 uppercase tracking-widest">Xizmatlarim</h2>
+                                <h2 className="text-xs font-black text-gray-400 uppercase tracking-widest">{t('services')}</h2>
                             </div>
-                            <span className="text-[10px] font-black bg-gray-50 px-3 py-1 rounded-full text-gray-400 uppercase">{formData.services.length} ta</span>
+                            <span className="text-[10px] font-black bg-gray-50 px-3 py-1 rounded-full text-gray-400 uppercase">{formData.services.length} {t('count_services')}</span>
                         </div>
 
                         <div className="space-y-3">
@@ -343,7 +406,7 @@ const ProfileSettings = () => {
                                 <div key={index} className="flex items-center justify-between p-4 bg-gray-50/50 border border-gray-50 rounded-2xl group animate-slide-in">
                                     <div className="flex flex-col">
                                         <span className="font-black text-gray-900 text-sm">{svc.name}</span>
-                                        <span className="text-[11px] font-black text-primary uppercase tracking-wider">{svc.price.toLocaleString()} so'm</span>
+                                        <span className="text-[11px] font-black text-primary uppercase tracking-wider">{svc.price.toLocaleString()} {t('sum')}</span>
                                     </div>
                                     <button onClick={() => removeService(index)} className="w-9 h-9 bg-red-50 text-red-500 rounded-xl flex items-center justify-center hover:bg-red-500 hover:text-white transition-all transform hover:rotate-12">
                                         <Trash2 size={16} />
@@ -356,7 +419,7 @@ const ProfileSettings = () => {
                             <div className="space-y-3 mb-4">
                                 <input
                                     type="text"
-                                    placeholder="Xizmat nomi (masalan: Montaj)"
+                                    placeholder={t('service_name_placeholder')}
                                     className="w-full bg-white border border-gray-100 rounded-2xl p-4 text-xs font-bold outline-none focus:ring-4 focus:ring-primary/10 transition-all"
                                     value={newService.name}
                                     onChange={(e) => setNewService({ ...newService, name: e.target.value })}
@@ -364,19 +427,19 @@ const ProfileSettings = () => {
                                 <div className="relative">
                                     <input
                                         type="number"
-                                        placeholder="Narxi"
+                                        placeholder={t('price')}
                                         className="w-full bg-white border border-gray-100 rounded-2xl p-4 text-xs font-bold outline-none focus:ring-4 focus:ring-primary/10 transition-all pr-12"
                                         value={newService.price}
                                         onChange={(e) => setNewService({ ...newService, price: e.target.value })}
                                     />
-                                    <span className="absolute right-4 top-1/2 -translate-y-1/2 text-[10px] font-black text-gray-400 uppercase">SO'M</span>
+                                    <span className="absolute right-4 top-1/2 -translate-y-1/2 text-[10px] font-black text-gray-400 uppercase">{t('sum_short')}</span>
                                 </div>
                             </div>
                             <button
                                 onClick={addService}
                                 className="w-full py-4 bg-primary text-white text-[11px] font-black rounded-2xl shadow-lg shadow-primary/20 flex items-center justify-center gap-2 hover:brightness-110 active:scale-95 transition-all uppercase tracking-widest"
                             >
-                                <Plus size={16} /> Qo'shish
+                                <Plus size={16} /> {t('add')}
                             </button>
                         </div>
                     </section>
@@ -387,7 +450,7 @@ const ProfileSettings = () => {
                             <div className="w-8 h-8 bg-rose-50 text-rose-500 rounded-xl flex items-center justify-center">
                                 <ImageIcon size={16} />
                             </div>
-                            <h2 className="text-xs font-black text-gray-400 uppercase tracking-widest">Ishlar galereyasi</h2>
+                            <h2 className="text-xs font-black text-gray-400 uppercase tracking-widest">{t('portfolio')}</h2>
                         </div>
 
                         <div className="grid grid-cols-3 gap-3 mb-6">
@@ -400,9 +463,19 @@ const ProfileSettings = () => {
                                 </div>
                             ))}
                             {formData.portfolio.length < 9 && (
-                                <div className="aspect-square bg-gray-50 border-2 border-dashed border-gray-200 rounded-[1.5rem] flex flex-col items-center justify-center text-gray-300">
+                                <div
+                                    onClick={() => document.getElementById('portfolio-upload').click()}
+                                    className="aspect-square bg-gray-50 border-2 border-dashed border-gray-200 rounded-[1.5rem] flex flex-col items-center justify-center text-gray-300 cursor-pointer hover:bg-gray-100 transition-colors"
+                                >
+                                    <input
+                                        id="portfolio-upload"
+                                        type="file"
+                                        className="hidden"
+                                        onChange={(e) => handleFileUpload(e, 'portfolio')}
+                                        accept="image/*"
+                                    />
                                     <ImageIcon size={24} />
-                                    <span className="text-[8px] font-black uppercase mt-1">Sizniki</span>
+                                    <span className="text-[8px] font-black uppercase mt-1">{t('add')}</span>
                                 </div>
                             )}
                         </div>
@@ -438,7 +511,7 @@ const ProfileSettings = () => {
                         {saving ? (
                             <div className="w-5 h-5 border-3 border-white rounded-full animate-spin border-t-transparent"></div>
                         ) : (
-                            <><Save size={18} /> Saqlash</>
+                            <><Save size={18} /> {t('save')}</>
                         )}
                     </button>
                 </div>

@@ -8,9 +8,12 @@ import {
 import axios from 'axios';
 import { API_URL } from '../config';
 
+import { useLanguage } from '../context/LanguageContext';
+
 const ProfessionalProfile = () => {
     const { id } = useParams();
     const navigate = useNavigate();
+    const { t } = useLanguage();
     const [pro, setPro] = useState(null);
     const [reviews, setReviews] = useState([]);
     const [loading, setLoading] = useState(true);
@@ -62,8 +65,8 @@ const ProfessionalProfile = () => {
                         <ArrowLeft size={24} className="text-gray-900" />
                     </button>
                     <div className="ml-2">
-                        <h2 className="font-black text-gray-900 leading-none">Usta profili</h2>
-                        <p className="text-[9px] text-gray-400 font-black uppercase tracking-[0.15em] mt-1">{pro.category?.name || 'Mutaxassis'}</p>
+                        <h2 className="font-black text-gray-900 leading-none">{t('usta_profile') || "Usta profili"}</h2>
+                        <p className="text-[9px] text-gray-400 font-black uppercase tracking-[0.15em] mt-1">{pro.category?.name || t('mutaxassis') || 'Mutaxassis'}</p>
                     </div>
                 </div>
                 <button className="p-2 rounded-full hover:bg-gray-100 text-gray-400 transition-all active:scale-90">
@@ -77,7 +80,9 @@ const ProfessionalProfile = () => {
                     <div className="relative group">
                         <div className="w-28 h-28 rounded-[2.5rem] overflow-hidden border-4 border-white shadow-2xl shrink-0 bg-gray-50 flex items-center justify-center p-1.5 transition-transform group-hover:scale-105">
                             <div className="w-full h-full rounded-[2rem] overflow-hidden">
-                                {pro.portfolio && pro.portfolio.length > 0 ? (
+                                {pro.profilePicture ? (
+                                    <img src={pro.profilePicture} alt={pro.userId?.name} className="w-full h-full object-cover" />
+                                ) : pro.portfolio && pro.portfolio.length > 0 ? (
                                     <img src={pro.portfolio[0]} alt={pro.userId?.name} className="w-full h-full object-cover" />
                                 ) : (
                                     <div className="w-full h-full bg-primary/10 flex items-center justify-center text-primary">
@@ -111,12 +116,12 @@ const ProfessionalProfile = () => {
                             {pro.isOnline ? (
                                 <div className="flex items-center gap-1.5 bg-green-50 px-2.5 py-1 rounded-full border border-green-100">
                                     <span className="w-1.5 h-1.5 bg-green-500 rounded-full animate-pulse"></span>
-                                    <span className="text-[10px] font-black text-green-700 uppercase tracking-tighter">Onlayn</span>
+                                    <span className="text-[10px] font-black text-green-700 uppercase tracking-tighter">{t('online')}</span>
                                 </div>
                             ) : (
                                 <div className="flex items-center gap-1.5 bg-gray-50 px-2.5 py-1 rounded-full border border-gray-100">
                                     <span className="w-1.5 h-1.5 bg-gray-400 rounded-full"></span>
-                                    <span className="text-[10px] font-black text-gray-400 uppercase tracking-tighter">Oflayn</span>
+                                    <span className="text-[10px] font-black text-gray-400 uppercase tracking-tighter">{t('offline')}</span>
                                 </div>
                             )}
                         </div>
@@ -143,7 +148,7 @@ const ProfessionalProfile = () => {
                             <span className="font-black text-gray-900 text-sm leading-none mb-1">
                                 {pro.workingHours?.start || '09:00'} - {pro.workingHours?.end || '18:00'}
                             </span>
-                            <span className="text-[10px] text-gray-400 font-bold uppercase tracking-widest leading-none">Ish vaqti</span>
+                            <span className="text-[10px] text-gray-400 font-bold uppercase tracking-widest leading-none">{t('working_hours')}</span>
                         </div>
                     </div>
 

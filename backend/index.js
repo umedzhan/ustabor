@@ -1,6 +1,9 @@
 const express = require('express');
 const mongoose = require('mongoose');
 const cors = require('cors');
+const path = require('path');
+const multer = require('multer');
+const fs = require('fs');
 require('dotenv').config();
 
 const Category = require('./models/Category');
@@ -18,6 +21,53 @@ app.use(cors({
     allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With', 'Accept']
 }));
 app.use(express.json());
+app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
+
+// ---------------------------------------------------------
+// MULTER CONFIGURATION
+// ---------------------------------------------------------
+const storage = multer.diskStorage({
+    destination: (req, file, cb) => {
+        const uploadPath = path.join(__dirname, 'uploads');
+        if (!fs.existsSync(uploadPath)) {
+            fs.mkdirSync(uploadPath, { recursive: true });
+        }
+        cb(null, uploadPath);
+    },
+    filename: (req, file, cb) => {
+        const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1E9);
+        cb(null, uniqueSuffix + path.extname(file.originalname));
+    }
+});
+
+const upload = multer({
+    storage,
+    limits: { fileSize: 5 * 1024 * 1024 }, // 5MB limit
+    fileFilter: (req, file, cb) => {
+        const filetypes = /jpeg|jpg|png|webp/;
+        const mimetype = filetypes.test(file.mimetype);
+        const extname = filetypes.test(path.extname(file.originalname).toLowerCase());
+        if (mimetype && extname) return cb(null, true);
+        cb(new Error("Faqat rasm fayllari (jpg, png, webp) ruxsat etilgan!"));
+    }
+});
+
+// Single file upload endpoint
+app.post('/api/upload', authMiddleware.verifyToken, upload.single('image'), (req, res) => {
+    try {
+        if (!req.file) return res.status(400).json({ error: 'Fayl yuklanmadi' });
+
+        // Build the full URL
+        const protocol = req.headers['x-forwarded-proto'] || req.protocol;
+        const host = req.get('host');
+        const fileUrl = `${protocol}://${host}/uploads/${req.file.filename}`;
+
+        res.json({ url: fileUrl, filename: req.file.filename });
+    } catch (err) {
+        res.status(500).json({ error: 'Fayl yuklashda xatolik', details: err.message });
+    }
+});
+// ---------------------------------------------------------
 
 // Connect to MongoDB
 mongoose.connect(process.env.MONGO_URI || 'mongodb://127.0.0.1:27017/ustabor').then(() => console.log('MongoDB connected'))

@@ -10,6 +10,7 @@ import ProfileSettings from './pages/Vendor/ProfileSettings';
 import Admin from './pages/Admin';
 import Onboarding from './pages/Onboarding';
 import Profile from './pages/Profile';
+import SelectRole from './pages/SelectRole';
 import BottomNav from './components/BottomNav';
 import { useAuth } from './context/AuthContext';
 
@@ -65,6 +66,9 @@ function App() {
               <Route path="/vendor/profile" element={
                 user && user.role === 'vendor' ? <ProfileSettings /> : <Navigate to="/" />
               } />
+
+              {/* Shared Routes */}
+              <Route path="/select-role" element={<SelectRole />} />
 
               {/* Admin Routes */}
               <Route path="/admin" element={<Admin />} />

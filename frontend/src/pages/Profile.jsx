@@ -9,7 +9,7 @@ const Profile = () => {
 
     const handleLogout = () => {
         logout();
-        navigate('/');
+        navigate('/select-role');
     };
 
     if (!user) return null;

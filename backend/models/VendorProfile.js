@@ -6,6 +6,11 @@ const VendorProfileSchema = new mongoose.Schema({
     rating: { type: Number, default: 0 },
     reviewCount: { type: Number, default: 0 },
     experienceYears: { type: Number, default: 0 },
+    languages: [{ type: String }], // ['Uzbek', 'Russian', 'English']
+    workingHours: {
+        start: { type: String, default: '09:00' },
+        end: { type: String, default: '18:00' }
+    },
     location: {
         type: { type: String, enum: ['Point'], default: 'Point' },
         coordinates: { type: [Number], default: [0, 0] }, // [longitude, latitude]

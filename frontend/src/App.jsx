@@ -36,70 +36,61 @@ function AppContent() {
     );
   }
 
-  const getOnboardingRedirect = () => {
-    // If we have a role but no onboarded status, direct them to their specific setup page first
+  // Is the user fully onboarded?
+  const isOnboarded = user && user.onboarded;
+  const isAdmin = user && user.role === 'admin';
+
+  // Where should a non-onboarded user go?
+  const getOnboardingPath = () => {
+    if (!user) return '/select-role';
     if (user.role === 'client') return '/client-setup';
     if (user.role === 'vendor') return '/vendor/register';
-    if (user.role === 'admin') return '/admin';
     return '/select-role';
   };
 
-  // Redirect to Onboarding logic if user is logged in but hasn't finished setup
-  const showOnboarding = user && !user.onboarded && user.role !== 'admin';
+  // Guard: redirect un-onboarded users to their setup page
+  const RequireOnboarding = ({ children }) => {
+    if (!isOnboarded && !isAdmin) return <Navigate to={getOnboardingPath()} replace />;
+    return children;
+  };
 
   return (
     <Router>
       <div className="max-w-md mx-auto bg-gray-50 min-h-screen shadow-lg relative">
         <Routes>
-          {showOnboarding ? (
-            <>
-              <Route path="/select-role" element={<SelectRole />} />
-              <Route path="/client-setup" element={<ClientSetup />} />
-              <Route path="/vendor/register" element={<VendorRegister />} />
-              {/* Only redirect if the path isn't strictly one of the allowed setups */}
-              <Route path="*" element={<Navigate to={getOnboardingRedirect()} replace />} />
-            </>
-          ) : (
-            <>
-              {/* Client Routes */}
-              <Route path="/" element={<Home />} />
-              <Route path="/onboarding" element={<SelectRole />} />
-              <Route path="/vendor/:id" element={<ProfessionalProfile />} />
-              <Route path="/vendor/:id/book" element={
-                user ? <OrderFlow /> : <Navigate to="/" />
-              } />
-              <Route path="/orders" element={
-                user ? <Orders /> : <Navigate to="/" />
-              } />
-              <Route path="/chat/:id" element={
-                user ? <Chat /> : <Navigate to="/" />
-              } />
-              <Route path="/chats" element={
-                user ? <div className="p-10 text-center">Chatlar ro'yxati (Tez kunda)</div> : <Navigate to="/" />
-              } />
-              <Route path="/profile" element={
-                user ? <Profile /> : <Navigate to="/" />
-              } />
+          {/* Onboarding Routes - always accessible */}
+          <Route path="/select-role" element={<SelectRole />} />
+          <Route path="/client-setup" element={<ClientSetup />} />
+          <Route path="/vendor/register" element={<VendorRegister />} />
 
-              {/* Vendor Routes */}
-              <Route path="/vendor/register" element={
-                user ? <VendorRegister /> : <Navigate to="/" />
-              } />
-              <Route path="/vendor/dashboard" element={
-                user && user.role === 'vendor' ? <Dashboard /> : <Navigate to="/vendor/register" />
-              } />
-              <Route path="/vendor/profile" element={
-                user && user.role === 'vendor' ? <ProfileSettings /> : <Navigate to="/" />
-              } />
+          {/* Admin Route */}
+          <Route path="/admin" element={<Admin />} />
 
-              {/* Shared Routes */}
-              <Route path="/select-role" element={<SelectRole />} />
+          {/* Main App Routes - require completed onboarding */}
+          <Route path="/" element={<RequireOnboarding><Home /></RequireOnboarding>} />
+          <Route path="/onboarding" element={<SelectRole />} />
+          <Route path="/vendor/:id" element={<ProfessionalProfile />} />
+          <Route path="/vendor/:id/book" element={<RequireOnboarding><OrderFlow /></RequireOnboarding>} />
+          <Route path="/orders" element={<RequireOnboarding><Orders /></RequireOnboarding>} />
+          <Route path="/chat/:id" element={<RequireOnboarding><Chat /></RequireOnboarding>} />
+          <Route path="/chats" element={<RequireOnboarding><div className="p-10 text-center">Chatlar ro'yxati (Tez kunda)</div></RequireOnboarding>} />
+          <Route path="/profile" element={<RequireOnboarding><Profile /></RequireOnboarding>} />
 
-              {/* Admin Routes */}
-              <Route path="/admin" element={<Admin />} />
-              <Route path="*" element={<Navigate to="/" />} />
-            </>
-          )}
+          {/* Vendor-specific Routes */}
+          <Route path="/vendor/dashboard" element={
+            user && user.role === 'vendor' ? <Dashboard /> : <Navigate to="/vendor/register" replace />
+          } />
+          <Route path="/vendor/profile" element={<RequireOnboarding><ProfileSettings /></RequireOnboarding>} />
+
+          {/* Shared */}
+          <Route path="/select-role" element={<SelectRole />} />
+
+          {/* Catch-all */}
+          <Route path="*" element={
+            (isOnboarded || isAdmin)
+              ? <Navigate to="/" replace />
+              : <Navigate to={getOnboardingPath()} replace />
+          } />
         </Routes>
         <BottomNav />
         <LanguageSwitcher />

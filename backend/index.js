@@ -103,24 +103,18 @@ app.post('/api/auth/telegram', async (req, res) => {
         }
 
         let user = await User.findOne({ telegramId: telegramUser.id.toString() });
-        const isAdmin = process.env.SUPER_ADMIN_ID && process.env.SUPER_ADMIN_ID === telegramUser.id.toString();
-
         if (!user) {
             user = new User({
                 telegramId: telegramUser.id.toString(),
                 name: telegramUser.first_name + (telegramUser.last_name ? ' ' + telegramUser.last_name : ''),
-                role: isAdmin ? 'admin' : 'none',
-                onboarded: isAdmin // Admins skip onboarding
+                role: 'none',
+                onboarded: false
             });
             await user.save();
-        } else if (isAdmin && user.role !== 'admin') {
-            // Promote existing user to super admin if they match the .env ID
-            user.role = 'admin';
-            user.onboarded = true;
-            await user.save();
-        } else if ((!user.onboarded || !user.profilePicture) && user.role !== 'admin') {
+        } else if (!user.onboarded || !user.profilePicture) {
             // Force users who haven't completed the NEW setup (which requires a profile picture)
             // to go through the SelectRole and Setup flow again.
+            // TEMPORARY: Reset EVEN if they were auto-promoted to admin previously so they can test the form!
             user.role = 'none';
             user.onboarded = false;
             await user.save();

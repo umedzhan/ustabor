@@ -35,7 +35,7 @@ function AppContent() {
     );
   }
 
-  // Redirect to Onboarding if user is logged in but hasn't chosen a role
+  // Redirect to SelectRole if user is logged in but hasn't chosen a role
   const showOnboarding = user && !user.onboarded && user.role !== 'admin';
 
   return (
@@ -43,12 +43,12 @@ function AppContent() {
       <div className="max-w-md mx-auto bg-gray-50 min-h-screen shadow-lg relative">
         <Routes>
           {showOnboarding ? (
-            <Route path="*" element={<Onboarding />} />
+            <Route path="*" element={<SelectRole />} />
           ) : (
             <>
               {/* Client Routes */}
               <Route path="/" element={<Home />} />
-              <Route path="/onboarding" element={<Onboarding />} />
+              <Route path="/onboarding" element={<SelectRole />} />
               <Route path="/vendor/:id" element={<ProfessionalProfile />} />
               <Route path="/vendor/:id/book" element={
                 user ? <OrderFlow /> : <Navigate to="/" />

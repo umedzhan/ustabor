@@ -1,17 +1,22 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { User, Briefcase, Shield, ChevronRight, Sparkles } from 'lucide-react';
+import { User, Briefcase, ChevronRight, Sparkles } from 'lucide-react';
 import { useLanguage } from '../context/LanguageContext';
+import { useAuth } from '../context/AuthContext';
+import axios from 'axios';
+import { API_URL } from '../config';
 
 const SelectRole = () => {
     const navigate = useNavigate();
     const { t } = useLanguage();
+    const { setUser } = useAuth();
+    const [loadingRole, setLoadingRole] = useState(null);
 
     const roles = [
         {
             id: 'client',
-            title: t('mijoz'),
-            subtitle: t('mijoz_sub'),
+            title: t('role_client'),
+            subtitle: t('role_client_desc'),
             icon: <User size={32} />,
             color: 'bg-blue-500',
             bg: 'bg-blue-50',
@@ -19,23 +24,28 @@ const SelectRole = () => {
         },
         {
             id: 'vendor',
-            title: t('usta'),
-            subtitle: t('usta_sub'),
+            title: t('role_vendor'),
+            subtitle: t('role_vendor_desc'),
             icon: <Briefcase size={32} />,
             color: 'bg-primary',
             bg: 'bg-indigo-50',
-            path: '/vendor/dashboard'
-        },
-        {
-            id: 'admin',
-            title: t('admin'),
-            subtitle: t('admin_sub'),
-            icon: <Shield size={32} />,
-            color: 'bg-red-500',
-            bg: 'bg-red-50',
-            path: '/admin/dashboard'
+            path: '/vendor/register'
         }
     ];
+
+    const handleRoleSelection = async (roleObj) => {
+        setLoadingRole(roleObj.id);
+        try {
+            const { data } = await axios.post(`${API_URL}/user/set-role`, { role: roleObj.id });
+            setUser(data.user);
+            navigate(roleObj.path);
+        } catch (error) {
+            console.error('Error setting role:', error);
+            alert(t('error'));
+        } finally {
+            setLoadingRole(null);
+        }
+    };
 
     return (
         <div className="min-h-screen bg-[#f8fafc] flex flex-col items-center justify-center p-6 pb-20 overflow-hidden relative">
@@ -55,8 +65,9 @@ const SelectRole = () => {
                     {roles.map((role, index) => (
                         <button
                             key={role.id}
-                            onClick={() => navigate(role.path)}
-                            className="group bg-white p-6 rounded-[2.5rem] border border-gray-100 shadow-xl shadow-black/[0.02] flex items-center gap-6 transition-all hover:scale-[1.02] hover:shadow-2xl hover:shadow-black/[0.05] active:scale-95 text-left relative overflow-hidden animate-slide-up"
+                            disabled={loadingRole !== null}
+                            onClick={() => handleRoleSelection(role)}
+                            className="group bg-white p-6 rounded-[2.5rem] border border-gray-100 shadow-xl shadow-black/[0.02] flex items-center gap-6 transition-all hover:scale-[1.02] hover:shadow-2xl hover:shadow-black/[0.05] active:scale-95 text-left relative overflow-hidden animate-slide-up disabled:opacity-50 disabled:cursor-not-allowed"
                             style={{ animationDelay: `${index * 0.1}s` }}
                         >
                             <div className={`absolute top-0 right-0 w-32 h-32 ${role.bg} rounded-full -mr-16 -mt-16 opacity-50 group-hover:scale-110 transition-transform`}></div>
@@ -71,10 +82,15 @@ const SelectRole = () => {
                             </div>
 
                             <div className="w-10 h-10 bg-gray-50 rounded-2xl flex items-center justify-center text-gray-300 group-hover:bg-primary group-hover:text-white transition-all relative z-10">
-                                <ChevronRight size={20} />
+                                {loadingRole === role.id ? (
+                                    <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin"></div>
+                                ) : (
+                                    <ChevronRight size={20} />
+                                )}
                             </div>
                         </button>
-                    ))}
+                    ))
+                    }
                 </div>
 
                 <div className="mt-16 text-center">

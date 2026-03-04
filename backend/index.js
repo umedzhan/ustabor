@@ -103,14 +103,20 @@ app.post('/api/auth/telegram', async (req, res) => {
         }
 
         let user = await User.findOne({ telegramId: telegramUser.id.toString() });
+        const isAdmin = process.env.SUPER_ADMIN_ID && process.env.SUPER_ADMIN_ID === telegramUser.id.toString();
+
         if (!user) {
-            const isAdmin = process.env.SUPER_ADMIN_ID && process.env.SUPER_ADMIN_ID === telegramUser.id.toString();
             user = new User({
                 telegramId: telegramUser.id.toString(),
                 name: telegramUser.first_name + (telegramUser.last_name ? ' ' + telegramUser.last_name : ''),
                 role: isAdmin ? 'admin' : 'client',
                 onboarded: isAdmin // Admins skip onboarding
             });
+            await user.save();
+        } else if (isAdmin && user.role !== 'admin') {
+            // Promote existing user to super admin if they match the .env ID
+            user.role = 'admin';
+            user.onboarded = true;
             await user.save();
         }
 
@@ -149,9 +155,15 @@ app.get('/api/auth/dev-login', async (req, res) => {
         if (!user) {
             user = new User({
                 telegramId: 'dev_user_123',
-                name: 'Dev User (Test)',
-                role: 'client'
+                name: 'Super Admin (Dev)',
+                role: 'admin',
+                onboarded: true
             });
+            await user.save();
+        } else {
+            // Upgrade existing dev user to admin for testing purposes
+            user.role = 'admin';
+            user.onboarded = true;
             await user.save();
         }
         const token = authMiddleware.generateToken(user);

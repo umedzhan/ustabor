@@ -61,6 +61,14 @@ export const translations = {
         reject_order: "Rad etish",
         finish_job: "Ishni yakunlash",
 
+        // Select Role / Onboarding
+        welcome: "Xush kelibsiz!",
+        choose_role: "Ustabor platformasida kim bo'lib kirmoqchisiz?",
+        role_client: "Mijozman (User)",
+        role_client_desc: "Xizmat qidirish va buyurtma berish",
+        role_vendor: "Ustaman (Vendor)",
+        role_vendor_desc: "Xizmat ko'rsatish va daromad topish",
+
         // Profile Settings
         edit_profile: "Profil tahriri",
         professional_info: "Professional ma'lumotlar",
@@ -191,6 +199,14 @@ export const translations = {
         accept_order: "Принять",
         reject_order: "Отказ",
         finish_job: "Завершить работу",
+
+        // Select Role / Onboarding
+        welcome: "Добро пожаловать!",
+        choose_role: "В качестве кого вы хотите войти на платформу Ustabor?",
+        role_client: "Я клиент (User)",
+        role_client_desc: "Искать услуги и делать заказы",
+        role_vendor: "Я мастер (Vendor)",
+        role_vendor_desc: "Оказывать услуги и зарабатывать",
 
         // Profile Settings
         edit_profile: "Редактирование профиля",

@@ -36,7 +36,10 @@ const SelectRole = () => {
     const handleRoleSelection = async (roleObj) => {
         setLoadingRole(roleObj.id);
         try {
-            const { data } = await axios.post(`${API_URL}/user/set-role`, { role: roleObj.id });
+            const token = localStorage.getItem('token');
+            const { data } = await axios.post(`${API_URL}/user/set-role`, { role: roleObj.id }, {
+                headers: { Authorization: `Bearer ${token}` }
+            });
             setUser(data.user);
             navigate(roleObj.path);
         } catch (error) {
@@ -55,7 +58,10 @@ const SelectRole = () => {
                     const pass = window.prompt("Super Admin parolini kiriting:");
                     if (pass === "admin123") {
                         try {
-                            const { data } = await axios.post(`${API_URL}/user/set-role`, { role: 'admin' });
+                            const token = localStorage.getItem('token');
+                            const { data } = await axios.post(`${API_URL}/user/set-role`, { role: 'admin' }, {
+                                headers: { Authorization: `Bearer ${token}` }
+                            });
                             setUser(data.user);
                             navigate('/admin');
                         } catch (e) {

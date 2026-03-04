@@ -269,13 +269,22 @@ const verifyAdmin = authMiddleware.verifyAdmin;
 // 5. Create a new vendor (Admin or Vendor registration)
 app.post('/api/vendors', authMiddleware.verifyToken, async (req, res) => {
     try {
-        const newVendor = new VendorProfile({ ...req.body, userId: req.user.id });
-        const savedVendor = await newVendor.save();
+        let vendor = await VendorProfile.findOne({ userId: req.user.id });
+
+        if (vendor) {
+            // Update existing vendor
+            Object.assign(vendor, req.body);
+            await vendor.save();
+        } else {
+            // Create new vendor
+            vendor = new VendorProfile({ ...req.body, userId: req.user.id });
+            await vendor.save();
+        }
 
         // Update user role to vendor AND mark as onboarded
         await User.findByIdAndUpdate(req.user.id, { role: 'vendor', onboarded: true });
 
-        res.status(201).json(savedVendor);
+        res.status(201).json(vendor);
     } catch (err) {
         res.status(500).json({ error: 'Server error creating vendor', details: err.message });
     }

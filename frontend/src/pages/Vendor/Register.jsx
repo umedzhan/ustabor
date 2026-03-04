@@ -1,10 +1,13 @@
 import { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import { API_URL } from '../../config';
 import { useAuth } from '../../context/AuthContext';
 import { User, MapPin, Briefcase, CheckCircle, Trash2, Plus, ImageIcon, Camera } from 'lucide-react';
 
 const VendorRegister = () => {
+    const navigate = useNavigate();
+    const { setUser } = useAuth();
     const [categories, setCategories] = useState([]);
     const [loading, setLoading] = useState(false);
     const [success, setSuccess] = useState(false);
@@ -78,11 +81,13 @@ const VendorRegister = () => {
         setLoading(true);
 
         try {
+            // Single token declaration for all requests in this submit block
+            const authToken = localStorage.getItem('token');
+
             // 1. Send /api/user/setup for name and profile picture
-            const token = localStorage.getItem('token');
             const setupPayload = { name: formData.name, profilePicture: formData.profilePicture };
             await axios.post(`${API_URL}/user/setup`, setupPayload, {
-                headers: { Authorization: `Bearer ${token}` }
+                headers: { Authorization: `Bearer ${authToken}` }
             });
 
             // 2. Prepare data according to VendorProfile schema
@@ -90,24 +95,27 @@ const VendorRegister = () => {
                 category: formData.categoryId,
                 location: {
                     address: formData.location,
-                    coordinates: [0, 0] // Dummy coordinates for now
+                    coordinates: [0, 0]
                 },
                 services: formData.services,
                 portfolio: formData.portfolio,
                 documents: formData.documents
             };
 
-            // Post to backend. The backend authMiddleware uses the JWT token
+            // Post to backend
             await axios.post(`${API_URL}/vendors`, payload, {
-                headers: { Authorization: `Bearer ${token}` }
+                headers: { Authorization: `Bearer ${authToken}` }
             });
 
             setSuccess(true);
+            // Fetch updated user from backend to reflect onboarded=true
+            const { data: meData } = await axios.get(`${API_URL}/user/me`, {
+                headers: { Authorization: `Bearer ${authToken}` }
+            });
+            setUser(meData.user);
             setTimeout(() => {
-                // Since the role changes, we could ideally reload the user context.
-                // For a quick UX flow, just redirect to dashboard.
-                window.location.href = '/vendor/dashboard';
-            }, 3000);
+                navigate('/vendor/dashboard');
+            }, 2000);
 
         } catch (error) {
             console.error("Registration error:", error);

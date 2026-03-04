@@ -111,10 +111,13 @@ app.post('/api/auth/telegram', async (req, res) => {
                 onboarded: false
             });
             await user.save();
+        } else if (user.role === 'admin') {
+            // Admin users always pass through without any reset,
+            // even if they lack a profile picture.
+            // They access the admin panel via the Shield icon.
         } else if (!user.onboarded || !user.profilePicture) {
-            // Force users who haven't completed the NEW setup (which requires a profile picture)
-            // to go through the SelectRole and Setup flow again.
-            // TEMPORARY: Reset EVEN if they were auto-promoted to admin previously so they can test the form!
+            // Regular users (client/vendor) who haven't completed the new setup flow
+            // (which requires name + profile picture) are reset to go through onboarding again.
             user.role = 'none';
             user.onboarded = false;
             await user.save();
@@ -124,6 +127,17 @@ app.post('/api/auth/telegram', async (req, res) => {
         res.json({ token, user });
     } catch (err) {
         res.status(500).json({ error: 'Auth failed', details: err.message });
+    }
+});
+
+// Get Current User Profile
+app.get('/api/user/me', authMiddleware.verifyToken, async (req, res) => {
+    try {
+        const user = await User.findById(req.user.id);
+        if (!user) return res.status(404).json({ error: 'User not found' });
+        res.json({ user });
+    } catch (err) {
+        res.status(500).json({ error: 'Failed to get user' });
     }
 });
 
@@ -163,7 +177,7 @@ app.post('/api/user/setup', authMiddleware.verifyToken, async (req, res) => {
         if (name) user.name = name;
         if (profilePicture) user.profilePicture = profilePicture;
 
-        // If client, this finishes their onboarding
+        // Mark as onboarded for clients (vendors are marked in the /vendors POST route)
         if (user.role === 'client') {
             user.onboarded = true;
         }
@@ -258,8 +272,8 @@ app.post('/api/vendors', authMiddleware.verifyToken, async (req, res) => {
         const newVendor = new VendorProfile({ ...req.body, userId: req.user.id });
         const savedVendor = await newVendor.save();
 
-        // Update user role to vendor
-        await User.findByIdAndUpdate(req.user.id, { role: 'vendor' });
+        // Update user role to vendor AND mark as onboarded
+        await User.findByIdAndUpdate(req.user.id, { role: 'vendor', onboarded: true });
 
         res.status(201).json(savedVendor);
     } catch (err) {

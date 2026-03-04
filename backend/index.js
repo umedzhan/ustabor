@@ -115,9 +115,9 @@ app.post('/api/auth/telegram', async (req, res) => {
             // Admin users always pass through without any reset,
             // even if they lack a profile picture.
             // They access the admin panel via the Shield icon.
-        } else if (!user.onboarded || !user.profilePicture) {
+        } else if (!user.onboarded) {
             // Regular users (client/vendor) who haven't completed the new setup flow
-            // (which requires name + profile picture) are reset to go through onboarding again.
+            // are reset to go through onboarding again.
             user.role = 'none';
             user.onboarded = false;
             await user.save();

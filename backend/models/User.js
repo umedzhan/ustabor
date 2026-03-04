@@ -4,7 +4,8 @@ const UserSchema = new mongoose.Schema({
     telegramId: { type: String, required: true, unique: true },
     name: { type: String, required: true },
     phone: { type: String }, // Can be set after sharing contact
-    role: { type: String, enum: ['client', 'vendor', 'admin'], default: 'client' },
+    profilePicture: { type: String }, // User's personal photo
+    role: { type: String, enum: ['none', 'client', 'vendor', 'admin'], default: 'none' },
     onboarded: { type: Boolean, default: false },
     walletBalance: { type: Number, default: 0 },
 }, { timestamps: true });

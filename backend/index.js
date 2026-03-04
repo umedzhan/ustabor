@@ -109,7 +109,7 @@ app.post('/api/auth/telegram', async (req, res) => {
             user = new User({
                 telegramId: telegramUser.id.toString(),
                 name: telegramUser.first_name + (telegramUser.last_name ? ' ' + telegramUser.last_name : ''),
-                role: isAdmin ? 'admin' : 'client',
+                role: isAdmin ? 'admin' : 'none',
                 onboarded: isAdmin // Admins skip onboarding
             });
             await user.save();
@@ -131,7 +131,7 @@ app.post('/api/auth/telegram', async (req, res) => {
 app.post('/api/user/set-role', authMiddleware.verifyToken, async (req, res) => {
     try {
         const { role } = req.body;
-        if (!['client', 'vendor'].includes(role)) {
+        if (!['client', 'vendor', 'admin'].includes(role)) {
             return res.status(400).json({ error: 'Invalid role' });
         }
 
@@ -139,12 +139,39 @@ app.post('/api/user/set-role', authMiddleware.verifyToken, async (req, res) => {
         if (!user) return res.status(404).json({ error: 'User not found' });
 
         user.role = role;
-        user.onboarded = true;
+        // Do not set onboarded to true yet. Onboarding is finished in the setup step.
+        // Except for admin, which doesn't need extra setup here.
+        if (role === 'admin') {
+            user.onboarded = true;
+        }
         await user.save();
 
         res.json({ message: 'Role updated', user });
     } catch (err) {
         res.status(500).json({ error: 'Failed to set role' });
+    }
+});
+
+// Setup User Profile (Client/Vendor Onboarding Step 2)
+app.post('/api/user/setup', authMiddleware.verifyToken, async (req, res) => {
+    try {
+        const { name, profilePicture } = req.body;
+
+        const user = await User.findById(req.user.id);
+        if (!user) return res.status(404).json({ error: 'User not found' });
+
+        if (name) user.name = name;
+        if (profilePicture) user.profilePicture = profilePicture;
+
+        // If client, this finishes their onboarding
+        if (user.role === 'client') {
+            user.onboarded = true;
+        }
+
+        await user.save();
+        res.json({ message: 'User setup complete', user });
+    } catch (err) {
+        res.status(500).json({ error: 'Failed to complete user setup' });
     }
 });
 

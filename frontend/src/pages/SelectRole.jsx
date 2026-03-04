@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { User, Briefcase, ChevronRight, Sparkles } from 'lucide-react';
+import { User, Briefcase, ChevronRight, Sparkles, ShieldAlert } from 'lucide-react';
 import { useLanguage } from '../context/LanguageContext';
 import { useAuth } from '../context/AuthContext';
 import axios from 'axios';
@@ -20,7 +20,7 @@ const SelectRole = () => {
             icon: <User size={32} />,
             color: 'bg-blue-500',
             bg: 'bg-blue-50',
-            path: '/'
+            path: '/client-setup'
         },
         {
             id: 'vendor',
@@ -49,6 +49,28 @@ const SelectRole = () => {
 
     return (
         <div className="min-h-screen bg-[#f8fafc] flex flex-col items-center justify-center p-6 pb-20 overflow-hidden relative">
+            {/* Admin Shortcut */}
+            <button
+                onClick={async () => {
+                    const pass = window.prompt("Super Admin parolini kiriting:");
+                    if (pass === "admin123") {
+                        try {
+                            const { data } = await axios.post(`${API_URL}/user/set-role`, { role: 'admin' });
+                            setUser(data.user);
+                            navigate('/admin');
+                        } catch (e) {
+                            alert("Xatolik yuz berdi");
+                        }
+                    } else if (pass !== null) {
+                        alert("Parol noto'g'ri!");
+                    }
+                }}
+                className="absolute top-6 right-6 w-10 h-10 bg-white rounded-full shadow-lg flex items-center justify-center z-50 text-gray-300 hover:text-red-500 hover:bg-red-50 transition-colors"
+                title="Super Admin Login"
+            >
+                <ShieldAlert size={18} />
+            </button>
+
             {/* Background elements */}
             <div className="absolute top-0 right-0 w-96 h-96 bg-primary/5 rounded-full -mr-48 -mt-48 blur-3xl"></div>
             <div className="absolute bottom-0 left-0 w-80 h-80 bg-blue-500/5 rounded-full -ml-40 -mb-40 blur-3xl"></div>

@@ -4,6 +4,7 @@ import ProfessionalProfile from './pages/ProfessionalProfile';
 import OrderFlow from './pages/Client/OrderFlow';
 import Orders from './pages/Client/Orders';
 import Chat from './pages/Client/Chat';
+import ClientSetup from './pages/Client/ClientSetup';
 import Dashboard from './pages/Vendor/Dashboard';
 import VendorRegister from './pages/Vendor/Register';
 import ProfileSettings from './pages/Vendor/ProfileSettings';
@@ -35,7 +36,14 @@ function AppContent() {
     );
   }
 
-  // Redirect to SelectRole if user is logged in but hasn't chosen a role
+  const getOnboardingRedirect = () => {
+    if (!user.role || user.role === 'none' || user.role === 'admin') return '/select-role';
+    if (user.role === 'client') return '/client-setup';
+    if (user.role === 'vendor') return '/vendor/register';
+    return '/select-role';
+  };
+
+  // Redirect to Onboarding logic if user is logged in but hasn't finished setup
   const showOnboarding = user && !user.onboarded && user.role !== 'admin';
 
   return (
@@ -43,7 +51,12 @@ function AppContent() {
       <div className="max-w-md mx-auto bg-gray-50 min-h-screen shadow-lg relative">
         <Routes>
           {showOnboarding ? (
-            <Route path="*" element={<SelectRole />} />
+            <>
+              <Route path="/select-role" element={<SelectRole />} />
+              <Route path="/client-setup" element={<ClientSetup />} />
+              <Route path="/vendor/register" element={<VendorRegister />} />
+              <Route path="*" element={<Navigate to={getOnboardingRedirect()} />} />
+            </>
           ) : (
             <>
               {/* Client Routes */}

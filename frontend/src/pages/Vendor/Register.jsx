@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import axios from 'axios';
 import { API_URL } from '../../config';
 import { useAuth } from '../../context/AuthContext';
-import { User, MapPin, Briefcase, CheckCircle } from 'lucide-react';
+import { User, MapPin, Briefcase, CheckCircle, Trash2, Plus, ImageIcon, Camera } from 'lucide-react';
 
 const VendorRegister = () => {
     const [categories, setCategories] = useState([]);
@@ -10,6 +10,8 @@ const VendorRegister = () => {
     const [success, setSuccess] = useState(false);
 
     const [formData, setFormData] = useState({
+        name: '',
+        profilePicture: '',
         categoryId: '',
         location: '',
         services: [],
@@ -20,6 +22,7 @@ const VendorRegister = () => {
     const [newService, setNewService] = useState({ name: '', price: '' });
     const [newImage, setNewImage] = useState('');
     const [newDoc, setNewDoc] = useState('');
+    const [uploadingObj, setUploadingObj] = useState({ state: false, field: null });
 
     useEffect(() => {
         // Fetch categories for the select dropdown
@@ -37,12 +40,52 @@ const VendorRegister = () => {
         fetchCategories();
     }, []);
 
+    const handleFileUpload = async (e, type = 'portfolio') => {
+        const file = e.target.files[0];
+        if (!file) return;
+
+        setUploadingObj({ state: true, field: type });
+        const uploadFormData = new FormData();
+        uploadFormData.append('image', file);
+
+        try {
+            const token = localStorage.getItem('token');
+            const { data } = await axios.post(`${API_URL}/upload`, uploadFormData, {
+                headers: {
+                    Authorization: `Bearer ${token}`,
+                    'Content-Type': 'multipart/form-data'
+                }
+            });
+
+            if (type === 'profilePicture') {
+                setFormData(prev => ({ ...prev, profilePicture: data.url }));
+            } else {
+                setFormData(prev => ({
+                    ...prev,
+                    portfolio: [...prev.portfolio, data.url]
+                }));
+            }
+        } catch (error) {
+            console.error("Error uploading image:", error);
+            alert("Rasm yuklashda xatolik yuz berdi");
+        } finally {
+            setUploadingObj({ state: false, field: null });
+        }
+    };
+
     const handleSubmit = async (e) => {
         e.preventDefault();
         setLoading(true);
 
         try {
-            // Prepare data according to VendorProfile schema
+            // 1. Send /api/user/setup for name and profile picture
+            const token = localStorage.getItem('token');
+            const setupPayload = { name: formData.name, profilePicture: formData.profilePicture };
+            await axios.post(`${API_URL}/user/setup`, setupPayload, {
+                headers: { Authorization: `Bearer ${token}` }
+            });
+
+            // 2. Prepare data according to VendorProfile schema
             const payload = {
                 category: formData.categoryId,
                 location: {
@@ -55,7 +98,6 @@ const VendorRegister = () => {
             };
 
             // Post to backend. The backend authMiddleware uses the JWT token
-            const token = localStorage.getItem('token');
             await axios.post(`${API_URL}/vendors`, payload, {
                 headers: { Authorization: `Bearer ${token}` }
             });
@@ -155,6 +197,43 @@ const VendorRegister = () => {
                     </div>
 
                     <div className="space-y-5">
+
+                        {/* Profile Picture Upload */}
+                        <div className="flex justify-center mb-4">
+                            <div className="relative">
+                                <div className="w-24 h-24 rounded-[1.5rem] bg-gray-50 border-4 border-white shadow-xl flex items-center justify-center overflow-hidden group">
+                                    {uploadingObj.state && uploadingObj.field === 'profilePicture' ? (
+                                        <div className="w-6 h-6 border-3 border-primary rounded-full animate-spin border-t-transparent"></div>
+                                    ) : formData.profilePicture ? (
+                                        <img src={formData.profilePicture} alt="Profile" className="w-full h-full object-cover" />
+                                    ) : (
+                                        <User size={32} className="text-gray-300" />
+                                    )}
+
+                                    <label className="absolute inset-0 bg-black/40 flex flex-col items-center justify-center text-white cursor-pointer opacity-0 group-hover:opacity-100 transition-opacity">
+                                        <Camera size={20} className="mb-1" />
+                                        <span className="text-[8px] font-black uppercase tracking-widest text-white">Yuklash</span>
+                                        <input type="file" className="hidden" accept="image/*" onChange={(e) => handleFileUpload(e, 'profilePicture')} disabled={uploadingObj.state} />
+                                    </label>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div>
+                            <label className="text-[10px] font-black text-gray-400 uppercase tracking-[0.15em] ml-1 mb-2 block">Ism va Familiyangiz</label>
+                            <div className="relative">
+                                <input
+                                    type="text"
+                                    placeholder="Alisher Valiyev"
+                                    className="w-full bg-gray-50 border border-gray-100 rounded-2xl p-4 text-sm font-bold text-gray-800 outline-none focus:ring-4 focus:ring-primary/10 transition-all pr-12"
+                                    value={formData.name}
+                                    onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                                    required
+                                />
+                                <User size={18} className="absolute right-4 top-1/2 -translate-y-1/2 text-primary" />
+                            </div>
+                        </div>
+
                         <div className="relative">
                             <label className="text-[10px] font-black text-gray-400 uppercase tracking-[0.15em] ml-1 mb-2 block">Sizning sohangiz</label>
                             <div className="relative">
@@ -326,7 +405,7 @@ const VendorRegister = () => {
 
                 <button
                     type="submit"
-                    disabled={loading || !formData.categoryId || formData.services.length === 0}
+                    disabled={loading || uploadingObj.state || !formData.name || !formData.categoryId || formData.services.length === 0}
                     className="w-full bg-primary text-white font-black py-5 rounded-[2rem] shadow-2xl shadow-primary/30 active:scale-[0.98] transition-all disabled:opacity-50 uppercase tracking-[0.2em] text-sm"
                 >
                     {loading ? (

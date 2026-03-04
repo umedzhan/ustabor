@@ -60,7 +60,7 @@ const VendorDashboard = () => {
             setOrders(orders.map(o => o._id === orderId ? { ...o, status: newStatus } : o));
         } catch (error) {
             console.error("Error updating status:", error);
-            alert("Holatni o'zgartirishda xatolik yuz berdi");
+            alert(t('error'));
         }
     };
 
@@ -73,25 +73,25 @@ const VendorDashboard = () => {
             case 'pending': return (
                 <div className="flex items-center gap-1 bg-amber-50 text-amber-600 px-3 py-1 rounded-full border border-amber-100 animate-pulse">
                     <AlertCircle size={10} />
-                    <span className="text-[10px] font-black uppercase tracking-tight">Kutilmoqda</span>
+                    <span className="text-[10px] font-black uppercase tracking-tight">{t('status_pending')}</span>
                 </div>
             );
             case 'accepted': return (
                 <div className="flex items-center gap-1 bg-blue-50 text-blue-600 px-3 py-1 rounded-full border border-blue-100">
                     <Sparkles size={10} />
-                    <span className="text-[10px] font-black uppercase tracking-tight">Qabul qilingan</span>
+                    <span className="text-[10px] font-black uppercase tracking-tight">{t('status_accepted')}</span>
                 </div>
             );
             case 'completed': return (
                 <div className="flex items-center gap-1 bg-green-50 text-green-600 px-3 py-1 rounded-full border border-green-100">
                     <CheckCircle size={10} />
-                    <span className="text-[10px] font-black uppercase tracking-tight">Bajarildi</span>
+                    <span className="text-[10px] font-black uppercase tracking-tight">{t('status_completed')}</span>
                 </div>
             );
             case 'cancelled': return (
                 <div className="flex items-center gap-1 bg-red-50 text-red-600 px-3 py-1 rounded-full border border-red-100">
                     <XCircle size={10} />
-                    <span className="text-[10px] font-black uppercase tracking-tight">Rad etilgan</span>
+                    <span className="text-[10px] font-black uppercase tracking-tight">{t('status_cancelled')}</span>
                 </div>
             );
             default: return null;
@@ -117,7 +117,7 @@ const VendorDashboard = () => {
                         </div>
                         <div>
                             <div className="flex items-center gap-2">
-                                <p className="text-white/60 text-[10px] font-black uppercase tracking-[0.25em]">Boshqaruv Paneli</p>
+                                <p className="text-white/60 text-[10px] font-black uppercase tracking-[0.25em]">{t('control_panel')}</p>
                                 {vendorProfile?.isOnline && (
                                     <span className="flex h-2 w-2 relative">
                                         <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-green-400 opacity-75"></span>
@@ -162,11 +162,11 @@ const VendorDashboard = () => {
                         <div className="flex flex-col">
                             <div className="flex items-baseline gap-2">
                                 <span className="text-5xl font-black tracking-tighter drop-shadow-lg">{user?.walletBalance?.toLocaleString() || '0'}</span>
-                                <span className="text-sm font-black text-white/50 uppercase tracking-widest">so'm</span>
+                                <span className="text-sm font-black text-white/50 uppercase tracking-widest">{t('sum')}</span>
                             </div>
                             <div className="flex items-center gap-2 mt-4 text-[10px] font-black text-green-400 bg-green-500/10 w-fit px-3 py-1 rounded-full border border-green-500/20">
                                 <TrendingUp size={12} />
-                                <span>+12% BU OYDA</span>
+                                <span>+12% {t('this_month')}</span>
                             </div>
                         </div>
                         <button className="bg-white text-primary px-8 py-4 rounded-[1.8rem] text-xs font-black shadow-2xl shadow-black/10 hover:scale-105 active:scale-95 transition-all flex items-center gap-2 uppercase tracking-widest">
@@ -210,7 +210,7 @@ const VendorDashboard = () => {
                             <div className="w-2.5 h-8 bg-primary rounded-full shadow-[0_0_15px_rgba(var(--primary-rgb),0.3)]"></div>
                             {t('active_projects')}
                         </h2>
-                        <p className="text-[10px] text-gray-400 font-bold uppercase tracking-widest mt-1 ml-5">Hozirgi barcha ishlar</p>
+                        <p className="text-[10px] text-gray-400 font-bold uppercase tracking-widest mt-1 ml-5">{t('all_current_jobs')}</p>
                     </div>
                     <div className="flex items-center gap-2 bg-gray-100 px-4 py-2 rounded-2xl">
                         <Zap size={14} className="text-primary" />
@@ -260,7 +260,7 @@ const VendorDashboard = () => {
                                                     </span>
                                                 </div>
                                                 <div className="flex items-center gap-1.5 bg-gray-50 px-3 py-1 rounded-full border border-gray-100/50">
-                                                    <span className="text-[10px] font-black text-gray-400">VAQT:</span>
+                                                    <span className="text-[10px] font-black text-gray-400">{t('time_label')}</span>
                                                     <span className="text-[10px] font-black text-gray-800">
                                                         {new Date(order.appointmentTime).toLocaleTimeString('uz-UZ', { hour: '2-digit', minute: '2-digit' })}
                                                     </span>
@@ -274,14 +274,14 @@ const VendorDashboard = () => {
                                         <div className="bg-gray-50/70 backdrop-blur-sm border border-gray-100 p-5 rounded-[2rem] flex flex-col gap-2">
                                             <div className="flex items-center gap-2 text-gray-400">
                                                 <MessageSquare size={14} />
-                                                <span className="text-[9px] font-black uppercase tracking-widest">Mijoz</span>
+                                                <span className="text-[9px] font-black uppercase tracking-widest">{t('client_label')}</span>
                                             </div>
                                             <span className="text-xs font-black text-gray-800">ID: ...{order.clientId?.toString().slice(-6)}</span>
                                         </div>
                                         <div className="bg-gray-50/70 backdrop-blur-sm border border-gray-100 p-5 rounded-[2rem] flex flex-col gap-2">
                                             <div className="flex items-center gap-2 text-primary">
                                                 <MapPin size={14} />
-                                                <span className="text-[9px] font-black uppercase tracking-widest">Manzil</span>
+                                                <span className="text-[9px] font-black uppercase tracking-widest">{t('address_label')}</span>
                                             </div>
                                             <span className="text-xs font-black text-gray-800 truncate">{order.location?.address?.split(',')[0]}</span>
                                         </div>
@@ -289,8 +289,8 @@ const VendorDashboard = () => {
 
                                     <div className="flex items-center justify-between px-2 bg-primary/5 p-4 rounded-3xl border border-primary/10">
                                         <div className="flex flex-col">
-                                            <span className="text-[10px] font-black text-primary/60 uppercase tracking-widest mb-1">Xizmat haqi</span>
-                                            <span className="text-2xl font-black text-primary tracking-tighter">{order.price?.toLocaleString()} <span className="text-xs font-black ml-1">SO'M</span></span>
+                                            <span className="text-[10px] font-black text-primary/60 uppercase tracking-widest mb-1">{t('service_fee')}</span>
+                                            <span className="text-2xl font-black text-primary tracking-tighter">{order.price?.toLocaleString()} <span className="text-xs font-black ml-1 uppercase">{t('sum_short')}</span></span>
                                         </div>
                                         <div className="w-12 h-12 bg-white rounded-2xl flex items-center justify-center shadow-lg border border-primary/10 text-primary">
                                             <Zap size={24} fill="currentColor" />
@@ -304,13 +304,13 @@ const VendorDashboard = () => {
                                                     onClick={() => handleUpdateStatus(order._id, 'accepted')}
                                                     className="flex-[2] py-5 bg-gray-900 text-white text-[11px] font-black rounded-[1.8rem] flex justify-center items-center gap-3 shadow-2xl shadow-black/20 hover:scale-105 active:scale-95 transition-all uppercase tracking-widest"
                                                 >
-                                                    <CheckCircle size={20} /> Qabul qilish
+                                                    <CheckCircle size={20} /> {t('accept_order')}
                                                 </button>
                                                 <button
                                                     onClick={() => handleUpdateStatus(order._id, 'cancelled')}
                                                     className="flex-1 py-5 bg-white text-red-500 text-[11px] font-black rounded-[1.8rem] flex justify-center items-center border-2 border-red-50 hover:bg-red-50 active:scale-95 transition-all"
                                                 >
-                                                    Rad etish
+                                                    {t('reject_order')}
                                                 </button>
                                             </>
                                         )}
@@ -319,7 +319,7 @@ const VendorDashboard = () => {
                                                 onClick={() => handleUpdateStatus(order._id, 'completed')}
                                                 className="w-full py-5 bg-green-500 text-white text-xs font-black rounded-[2rem] flex justify-center items-center gap-3 shadow-2xl shadow-green-500/30 hover:brightness-110 active:scale-95 transition-all uppercase tracking-[0.15em]"
                                             >
-                                                <Sparkles size={20} /> Ishni yakunlash
+                                                <Sparkles size={20} /> {t('finish_job')}
                                             </button>
                                         )}
                                     </div>

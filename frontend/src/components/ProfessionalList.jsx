@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
-import { Star, ShieldCheck } from 'lucide-react';
+import { Star, ShieldCheck, ChevronRight } from 'lucide-react';
 import axios from 'axios';
 import { API_URL } from '../config';
 import { useLanguage } from '../context/LanguageContext';

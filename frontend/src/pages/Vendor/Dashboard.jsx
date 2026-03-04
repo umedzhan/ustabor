@@ -1,12 +1,13 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Wallet, Bell, Clock, CheckCircle, XCircle, LayoutDashboard, Settings } from 'lucide-react';
+import { Wallet, Bell, Clock, CheckCircle, XCircle, LayoutDashboard, Settings, Star, MapPin } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
 import axios from 'axios';
 import { API_URL } from '../../config';
 
 const VendorDashboard = () => {
     const { user, setUser } = useAuth();
+    const [orders, setOrders] = useState([]);
     const [loading, setLoading] = useState(true);
 
     useEffect(() => {

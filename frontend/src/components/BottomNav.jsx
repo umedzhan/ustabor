@@ -12,21 +12,21 @@ const BottomNav = () => {
         if (user.role === 'admin') {
             return (
                 <>
-                    <NavLink to="/" className={({ isActive }) => `flex flex-col items-center gap-1 p-2 ${isActive ? 'text-primary' : 'text-gray-400'}`}>
-                        <Home size={24} />
-                        <span className="text-[10px] font-bold">Asosiy</span>
-                    </NavLink>
                     <NavLink to="/admin" className={({ isActive }) => `flex flex-col items-center gap-1 p-2 ${isActive ? 'text-primary' : 'text-gray-400'}`}>
+                        <LayoutDashboard size={24} />
+                        <span className="text-[10px] font-bold">Monitor</span>
+                    </NavLink>
+                    <NavLink to="/admin?tab=moderation" className={({ isActive }) => `flex flex-col items-center gap-1 p-2 ${isActive ? 'text-primary' : 'text-gray-400'}`}>
                         <ClipboardList size={24} />
-                        <span className="text-[10px] font-bold">Moderatsiya</span>
+                        <span className="text-[10px] font-bold">Arizalar</span>
                     </NavLink>
                     <NavLink to="/admin?tab=broadcast" className={({ isActive }) => `flex flex-col items-center gap-1 p-2 ${isActive ? 'text-primary' : 'text-gray-400'}`}>
                         <Megaphone size={24} />
                         <span className="text-[10px] font-bold">Broadcast</span>
                     </NavLink>
-                    <NavLink to="/admin?tab=add" className={({ isActive }) => `flex flex-col items-center gap-1 p-2 ${isActive ? 'text-primary' : 'text-gray-400'}`}>
-                        <User size={23} />
-                        <span className="text-[10px] font-bold">Usta qo'shish</span>
+                    <NavLink to="/profile" className={({ isActive }) => `flex flex-col items-center gap-1 p-2 ${isActive ? 'text-primary' : 'text-gray-400'}`}>
+                        <User size={24} />
+                        <span className="text-[10px] font-bold">Profil</span>
                     </NavLink>
                 </>
             );
@@ -41,13 +41,13 @@ const BottomNav = () => {
                     </NavLink>
                     <NavLink to="/vendor/dashboard" className={({ isActive }) => `flex flex-col items-center gap-1 p-2 ${isActive ? 'text-primary' : 'text-gray-400'}`}>
                         <LayoutDashboard size={24} />
-                        <span className="text-[10px] font-bold">Usta Paneli</span>
+                        <span className="text-[10px] font-bold">Panel</span>
                     </NavLink>
-                    <NavLink to="/vendor/dashboard" className={({ isActive }) => `flex flex-col items-center gap-1 p-2 ${isActive ? 'text-primary' : 'text-gray-400'}`}>
-                        <CheckCircle size={24} />
+                    <NavLink to="/orders" className={({ isActive }) => `flex flex-col items-center gap-1 p-2 ${isActive ? 'text-primary' : 'text-gray-400'}`}>
+                        <Clock size={24} />
                         <span className="text-[10px] font-bold">Buyurtmalar</span>
                     </NavLink>
-                    <NavLink to="/vendor/profile" className={({ isActive }) => `flex flex-col items-center gap-1 p-2 ${isActive ? 'text-primary' : 'text-gray-400'}`}>
+                    <NavLink to="/profile" className={({ isActive }) => `flex flex-col items-center gap-1 p-2 ${isActive ? 'text-primary' : 'text-gray-400'}`}>
                         <User size={24} />
                         <span className="text-[10px] font-bold">Profil</span>
                     </NavLink>

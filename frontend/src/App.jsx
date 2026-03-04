@@ -9,6 +9,7 @@ import VendorRegister from './pages/Vendor/Register';
 import ProfileSettings from './pages/Vendor/ProfileSettings';
 import Admin from './pages/Admin';
 import Onboarding from './pages/Onboarding';
+import Profile from './pages/Profile';
 import BottomNav from './components/BottomNav';
 import { useAuth } from './context/AuthContext';
 
@@ -51,7 +52,7 @@ function App() {
                 user ? <div className="p-10 text-center">Chatlar ro'yxati (Tez kunda)</div> : <Navigate to="/" />
               } />
               <Route path="/profile" element={
-                user ? <div className="p-10 text-center">Profil ma'lumotlari (Tez kunda)</div> : <Navigate to="/" />
+                user ? <Profile /> : <Navigate to="/" />
               } />
 
               {/* Vendor Routes */}

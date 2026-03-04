@@ -237,6 +237,18 @@ app.get('/api/vendor/orders', authMiddleware.verifyToken, async (req, res) => {
     }
 });
 
+// Client: Get client's orders
+app.get('/api/orders', authMiddleware.verifyToken, async (req, res) => {
+    try {
+        const orders = await Order.find({ clientId: req.user.id })
+            .populate('vendorId', 'userId category')
+            .sort({ createdAt: -1 });
+        res.json(orders);
+    } catch (err) {
+        res.status(500).json({ error: 'Server error fetching client orders' });
+    }
+});
+
 // 6. Create Order
 app.post('/api/orders', authMiddleware.verifyToken, async (req, res) => {
     try {
@@ -289,7 +301,8 @@ app.put('/api/orders/:id/status', authMiddleware.verifyToken, async (req, res) =
 
             // Notify Vendor
             try {
-                const vendorUser = await User.findById(order.vendorId);
+                // vendorId points to VendorProfile, which has userId
+                const vendorUser = await User.findById(order.vendorId.userId);
                 if (vendorUser && vendorUser.telegramId) {
                     const vendorMsg = `Yangi buyurtma statusi: ${status.toUpperCase()}`;
                     await bot.telegram.sendMessage(vendorUser.telegramId, vendorMsg);
@@ -303,7 +316,7 @@ app.put('/api/orders/:id/status', authMiddleware.verifyToken, async (req, res) =
             const commissionAmount = order.price * COMMISSION_RATE;
 
             // Deduct from vendor's wallet
-            const vendorUser = await User.findById(order.vendorId);
+            const vendorUser = await User.findById(order.vendorId.userId);
             if (vendorUser) {
                 vendorUser.walletBalance = (vendorUser.walletBalance || 0) - commissionAmount;
                 await vendorUser.save();
@@ -355,7 +368,7 @@ app.post('/api/orders/:id/review', authMiddleware.verifyToken, async (req, res) 
         await order.save();
 
         // Update VendorProfile Aggregate Rating
-        const vendorProfile = await VendorProfile.findOne({ userId: order.vendorId });
+        const vendorProfile = await VendorProfile.findById(order.vendorId);
         if (vendorProfile) {
             const evaluatedOrders = await Order.find({
                 vendorId: order.vendorId,

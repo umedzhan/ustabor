@@ -37,9 +37,10 @@ function AppContent() {
   }
 
   const getOnboardingRedirect = () => {
-    if (!user.role || user.role === 'none' || user.role === 'admin') return '/select-role';
+    // If we have a role but no onboarded status, direct them to their specific setup page first
     if (user.role === 'client') return '/client-setup';
     if (user.role === 'vendor') return '/vendor/register';
+    if (user.role === 'admin') return '/admin';
     return '/select-role';
   };
 
@@ -55,7 +56,8 @@ function AppContent() {
               <Route path="/select-role" element={<SelectRole />} />
               <Route path="/client-setup" element={<ClientSetup />} />
               <Route path="/vendor/register" element={<VendorRegister />} />
-              <Route path="*" element={<Navigate to={getOnboardingRedirect()} />} />
+              {/* Only redirect if the path isn't strictly one of the allowed setups */}
+              <Route path="*" element={<Navigate to={getOnboardingRedirect()} replace />} />
             </>
           ) : (
             <>

@@ -118,10 +118,11 @@ app.post('/api/auth/telegram', async (req, res) => {
             user.role = 'admin';
             user.onboarded = true;
             await user.save();
-        } else if (!user.onboarded && user.role !== 'admin' && user.role !== 'none') {
-            // If they are an old existing user who never finished onboarding
-            // force their role to 'none' so the new frontend routing catches them
+        } else if ((!user.onboarded || !user.profilePicture) && user.role !== 'admin') {
+            // Force users who haven't completed the NEW setup (which requires a profile picture)
+            // to go through the SelectRole and Setup flow again.
             user.role = 'none';
+            user.onboarded = false;
             await user.save();
         }
 

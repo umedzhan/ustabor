@@ -1,11 +1,13 @@
 import React, { useState } from 'react';
 import axios from 'axios';
 import { API_URL } from '../../config';
+import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 import { useLanguage } from '../../context/LanguageContext';
 import { User, Camera, CheckCircle } from 'lucide-react';
 
 const ClientSetup = () => {
+    const navigate = useNavigate();
     const { setUser } = useAuth();
     const { t } = useLanguage();
     const [name, setName] = useState('');
@@ -49,7 +51,7 @@ const ClientSetup = () => {
                 headers: { Authorization: `Bearer ${token}` }
             });
             setUser(data.user);
-            window.location.href = '/';
+            navigate('/');
         } catch (error) {
             console.error("Setup error:", error);
             alert("Xatolik yuz berdi. Iltimos qaytadan urinib ko'ring.");

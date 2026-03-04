@@ -118,6 +118,11 @@ app.post('/api/auth/telegram', async (req, res) => {
             user.role = 'admin';
             user.onboarded = true;
             await user.save();
+        } else if (!user.onboarded && user.role !== 'admin' && user.role !== 'none') {
+            // If they are an old existing user who never finished onboarding
+            // force their role to 'none' so the new frontend routing catches them
+            user.role = 'none';
+            await user.save();
         }
 
         const token = authMiddleware.generateToken(user);
@@ -182,16 +187,19 @@ app.get('/api/auth/dev-login', async (req, res) => {
         if (!user) {
             user = new User({
                 telegramId: 'dev_user_123',
-                name: 'Super Admin (Dev)',
-                role: 'admin',
-                onboarded: true
+                name: 'Dev User',
+                role: 'none',
+                onboarded: false
             });
             await user.save();
         } else {
-            // Upgrade existing dev user to admin for testing purposes
-            user.role = 'admin';
-            user.onboarded = true;
-            await user.save();
+            // For testing the onboarding flow, constantly resetting to 'none' is bad UX.
+            // But we will reset it precisely once right now if they were an admin
+            if (user.role === 'admin') {
+                user.role = 'none';
+                user.onboarded = false;
+                await user.save();
+            }
         }
         const token = authMiddleware.generateToken(user);
         res.json({ token, user });

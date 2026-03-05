@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { User, Briefcase, ChevronRight, Sparkles, ShieldAlert } from 'lucide-react';
 import { useLanguage } from '../context/LanguageContext';
@@ -9,8 +9,17 @@ import { API_URL } from '../config';
 const SelectRole = () => {
     const navigate = useNavigate();
     const { t } = useLanguage();
-    const { setUser } = useAuth();
+    const { setUser, user } = useAuth();
     const [loadingRole, setLoadingRole] = useState(null);
+
+    // If user is already onboarded, redirect them to their home
+    useEffect(() => {
+        if (user && user.onboarded) {
+            if (user.role === 'admin') navigate('/admin', { replace: true });
+            else if (user.role === 'vendor') navigate('/vendor/dashboard', { replace: true });
+            else if (user.role === 'client') navigate('/', { replace: true });
+        }
+    }, [user, navigate]);
 
     const roles = [
         {

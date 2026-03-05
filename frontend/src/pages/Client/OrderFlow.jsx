@@ -1,13 +1,15 @@
 import { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { ArrowLeft, MapPin, CreditCard, Banknote, CalendarClock, CheckCircle } from 'lucide-react';
+import { ArrowLeft, MapPin, CreditCard, Banknote, CalendarClock, CheckCircle, Crosshair } from 'lucide-react';
 import axios from 'axios';
 import { API_URL } from '../../config';
+import { useAuth } from '../../context/AuthContext';
 import WebApp from '@twa-dev/sdk';
 
 const OrderFlow = () => {
-    const { id } = useParams(); // Vendor ID
+    const { id } = useParams();
     const navigate = useNavigate();
+    const { user } = useAuth();
     const [vendor, setVendor] = useState(null);
     const [loading, setLoading] = useState(true);
 
@@ -21,6 +23,7 @@ const OrderFlow = () => {
     });
     const [step, setStep] = useState(1);
     const [orderLoading, setOrderLoading] = useState(false);
+    const [locating, setLocating] = useState(false);
 
     useEffect(() => {
         const fetchVendor = async () => {
@@ -42,6 +45,33 @@ const OrderFlow = () => {
         };
         fetchVendor();
     }, [id]);
+
+    // Auto-fill address from user's saved location
+    useEffect(() => {
+        if (user?.location?.address) {
+            setBookingDetails(prev => ({ ...prev, address: user.location.address }));
+        }
+    }, [user]);
+
+    const handleLocateMe = () => {
+        if (!navigator.geolocation) return alert('Geolokatsiya qo\'llab-quvvatlanmaydi');
+        setLocating(true);
+        navigator.geolocation.getCurrentPosition(
+            async (pos) => {
+                const { latitude, longitude } = pos.coords;
+                // Reverse geocode using nominatim
+                try {
+                    const resp = await fetch(`https://nominatim.openstreetmap.org/reverse?lat=${latitude}&lon=${longitude}&format=json`);
+                    const geo = await resp.json();
+                    setBookingDetails(prev => ({ ...prev, address: geo.display_name || `${latitude}, ${longitude}` }));
+                } catch {
+                    setBookingDetails(prev => ({ ...prev, address: `${latitude}, ${longitude}` }));
+                }
+                setLocating(false);
+            },
+            () => { setLocating(false); alert('Lokatsiya olishda xatolik'); }
+        );
+    };
 
     const handleConfirmOrder = async () => {
         setOrderLoading(true);
@@ -141,10 +171,18 @@ const OrderFlow = () => {
                             <input
                                 type="text"
                                 placeholder="Manzilni kiriting..."
-                                className="w-full bg-gray-50 border border-gray-100 rounded-xl p-3 pl-10 text-sm outline-none focus:border-primary/50"
+                                className="w-full bg-gray-50 border border-gray-100 rounded-xl p-3 pl-10 pr-12 text-sm outline-none focus:border-primary/50"
                                 value={bookingDetails.address}
                                 onChange={e => setBookingDetails({ ...bookingDetails, address: e.target.value })}
                             />
+                            <button
+                                type="button"
+                                onClick={handleLocateMe}
+                                disabled={locating}
+                                className="absolute right-2 top-1/2 -translate-y-1/2 p-1.5 bg-primary/10 rounded-lg text-primary disabled:opacity-50"
+                            >
+                                {locating ? <div className="w-4 h-4 border-2 border-primary rounded-full animate-spin border-t-transparent" /> : <Crosshair size={16} />}
+                            </button>
                         </div>
                     </div>
 

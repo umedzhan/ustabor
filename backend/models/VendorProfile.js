@@ -5,15 +5,16 @@ const VendorProfileSchema = new mongoose.Schema({
     category: { type: mongoose.Schema.Types.ObjectId, ref: 'Category', required: true },
     rating: { type: Number, default: 0 },
     reviewCount: { type: Number, default: 0 },
+    viewCount: { type: Number, default: 0 },  // how many users opened this profile
     experienceYears: { type: Number, default: 0 },
-    languages: [{ type: String }], // ['Uzbek', 'Russian', 'English']
+    languages: [{ type: String }],
     workingHours: {
         start: { type: String, default: '09:00' },
         end: { type: String, default: '18:00' }
     },
     location: {
         type: { type: String, enum: ['Point'], default: 'Point' },
-        coordinates: { type: [Number], default: [0, 0] }, // [longitude, latitude]
+        coordinates: { type: [Number], default: [0, 0] },
         address: { type: String }
     },
     services: [{
@@ -22,10 +23,10 @@ const VendorProfileSchema = new mongoose.Schema({
     }],
     isOnline: { type: Boolean, default: false },
     verificationStatus: { type: String, enum: ['pending', 'approved', 'rejected'], default: 'pending' },
-    documents: [{ type: String }], // URLs to documents
+    documents: [{ type: String }],
     aboutText: { type: String },
     profilePicture: { type: String },
-    portfolio: [{ type: String }] // URLs to portfolio images
+    portfolio: [{ type: String }]
 }, { timestamps: true });
 
 VendorProfileSchema.index({ location: '2dsphere' });

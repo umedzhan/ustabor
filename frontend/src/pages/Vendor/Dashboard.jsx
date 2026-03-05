@@ -4,7 +4,7 @@ import {
     Wallet, Bell, Clock, CheckCircle, XCircle,
     LayoutDashboard, Settings, Star, MapPin,
     MessageSquare, ChevronRight, Zap, TrendingUp,
-    AlertCircle, Sparkles
+    AlertCircle, Sparkles, Eye, BarChart2, FileText
 } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
 import { useLanguage } from '../../context/LanguageContext';
@@ -18,6 +18,8 @@ const VendorDashboard = () => {
     const [orders, setOrders] = useState([]);
     const [loading, setLoading] = useState(true);
     const [vendorProfile, setVendorProfile] = useState(null);
+    const [report, setReport] = useState(null);
+    const [activeTab, setActiveTab] = useState('orders'); // 'orders' | 'report'
     const ordersRef = useRef(null);
 
     const pendingOrdersCount = orders.filter(o => o.status === 'pending').length;
@@ -28,17 +30,21 @@ const VendorDashboard = () => {
                 const token = localStorage.getItem('token');
                 if (!token) return;
 
-                const [ordersRes, profileRes] = await Promise.all([
+                const [ordersRes, profileRes, reportRes] = await Promise.all([
                     axios.get(`${API_URL}/vendor/orders`, {
                         headers: { Authorization: `Bearer ${token}` }
                     }),
                     axios.get(`${API_URL}/vendor/profile`, {
+                        headers: { Authorization: `Bearer ${token}` }
+                    }),
+                    axios.get(`${API_URL}/vendor/report`, {
                         headers: { Authorization: `Bearer ${token}` }
                     })
                 ]);
 
                 setOrders(ordersRes.data);
                 setVendorProfile(profileRes.data);
+                setReport(reportRes.data);
             } catch (error) {
                 console.error("Error fetching dashboard data:", error);
             } finally {
@@ -177,33 +183,129 @@ const VendorDashboard = () => {
             </div>
 
             {/* Quick Stats Grid */}
-            <div className="px-6 -mt-10 relative z-20 grid grid-cols-2 gap-4">
-                <div className="bg-white rounded-[2.5rem] p-6 shadow-2xl shadow-black/[0.04] border border-gray-50 flex flex-col gap-3 group hover:border-primary/20 transition-all">
-                    <div className="w-10 h-10 bg-green-50 text-green-500 rounded-2xl flex items-center justify-center group-hover:scale-110 transition-transform">
-                        <CheckCircle size={20} />
+            <div className="px-6 -mt-10 relative z-20 grid grid-cols-3 gap-3">
+                <div className="bg-white rounded-[2rem] p-5 shadow-2xl shadow-black/[0.04] border border-gray-50 flex flex-col gap-2 group hover:border-primary/20 transition-all">
+                    <div className="w-9 h-9 bg-green-50 text-green-500 rounded-xl flex items-center justify-center">
+                        <CheckCircle size={18} />
                     </div>
                     <div className="flex flex-col">
-                        <span className="text-2xl font-black text-gray-900 leading-none">
+                        <span className="text-xl font-black text-gray-900 leading-none">
                             {orders.filter(o => o.status === 'completed' || o.status === 'evaluated').length}
                         </span>
-                        <span className="text-[10px] font-black text-gray-400 uppercase tracking-widest mt-1">{t('completed_orders')}</span>
+                        <span className="text-[9px] font-black text-gray-400 uppercase tracking-wider mt-1">Yakunlangan</span>
                     </div>
                 </div>
-                <div className="bg-white rounded-[2.5rem] p-6 shadow-2xl shadow-black/[0.04] border border-gray-50 flex flex-col gap-3 group hover:border-amber-100 transition-all">
-                    <div className="w-10 h-10 bg-amber-50 text-amber-500 rounded-2xl flex items-center justify-center group-hover:scale-110 transition-transform">
-                        <Star size={20} fill="currentColor" />
+                <div className="bg-white rounded-[2rem] p-5 shadow-2xl shadow-black/[0.04] border border-gray-50 flex flex-col gap-2 group hover:border-amber-100 transition-all">
+                    <div className="w-9 h-9 bg-amber-50 text-amber-500 rounded-xl flex items-center justify-center">
+                        <Star size={18} fill="currentColor" />
                     </div>
                     <div className="flex flex-col">
-                        <span className="text-2xl font-black text-gray-900 leading-none">
+                        <span className="text-xl font-black text-gray-900 leading-none">
                             {Number(vendorProfile?.rating || 5.0).toFixed(1)}
                         </span>
-                        <span className="text-[10px] font-black text-gray-400 uppercase tracking-widest mt-1">{t('rating')}</span>
+                        <span className="text-[9px] font-black text-gray-400 uppercase tracking-wider mt-1">Reyting</span>
+                    </div>
+                </div>
+                <div className="bg-white rounded-[2rem] p-5 shadow-2xl shadow-black/[0.04] border border-gray-50 flex flex-col gap-2 group hover:border-blue-100 transition-all">
+                    <div className="w-9 h-9 bg-blue-50 text-blue-500 rounded-xl flex items-center justify-center">
+                        <Eye size={18} />
+                    </div>
+                    <div className="flex flex-col">
+                        <span className="text-xl font-black text-gray-900 leading-none">
+                            {vendorProfile?.viewCount || 0}
+                        </span>
+                        <span className="text-[9px] font-black text-gray-400 uppercase tracking-wider mt-1">Ko'rishlar</span>
                     </div>
                 </div>
             </div>
 
-            {/* Orders Section */}
-            <div className="px-6 py-10" ref={ordersRef}>
+            {/* Tab Switcher */}
+            <div className="px-6 pt-6 flex gap-2">
+                <button
+                    onClick={() => setActiveTab('orders')}
+                    className={`flex-1 py-3 rounded-2xl text-[11px] font-black uppercase tracking-widest transition-all flex items-center justify-center gap-2 ${activeTab === 'orders' ? 'bg-primary text-white shadow-lg shadow-primary/30' : 'bg-white text-gray-400 border border-gray-100'}`}
+                >
+                    <Clock size={14} /> Zakazlar
+                </button>
+                <button
+                    onClick={() => setActiveTab('report')}
+                    className={`flex-1 py-3 rounded-2xl text-[11px] font-black uppercase tracking-widest transition-all flex items-center justify-center gap-2 ${activeTab === 'report' ? 'bg-primary text-white shadow-lg shadow-primary/30' : 'bg-white text-gray-400 border border-gray-100'}`}
+                >
+                    <BarChart2 size={14} /> Hisobot
+                </button>
+            </div>
+
+            {/* Report Tab */}
+            {activeTab === 'report' && (
+                <div className="px-6 py-6 flex flex-col gap-4">
+                    {!report ? (
+                        <div className="h-32 bg-gray-100 rounded-3xl animate-pulse" />
+                    ) : (
+                        <>
+                            {/* Summary Cards */}
+                            <div className="grid grid-cols-2 gap-3">
+                                <div className="bg-white p-5 rounded-[2rem] border border-gray-100 shadow-sm">
+                                    <p className="text-[9px] font-black text-gray-400 uppercase tracking-widest mb-2">Jami daromad</p>
+                                    <p className="text-xl font-black text-primary">{report.totalEarned?.toLocaleString() || 0} <span className="text-xs">so'm</span></p>
+                                </div>
+                                <div className="bg-white p-5 rounded-[2rem] border border-gray-100 shadow-sm">
+                                    <p className="text-[9px] font-black text-gray-400 uppercase tracking-widest mb-2">Sof daromad</p>
+                                    <p className="text-xl font-black text-green-600">{report.netEarned?.toLocaleString() || 0} <span className="text-xs">so'm</span></p>
+                                </div>
+                                <div className="bg-white p-5 rounded-[2rem] border border-gray-100 shadow-sm">
+                                    <p className="text-[9px] font-black text-gray-400 uppercase tracking-widest mb-2">Komissiya ({report.commissionRate}%)</p>
+                                    <p className="text-xl font-black text-red-500">{report.totalCommission?.toLocaleString() || 0} <span className="text-xs">so'm</span></p>
+                                </div>
+                                <div className="bg-white p-5 rounded-[2rem] border border-gray-100 shadow-sm">
+                                    <p className="text-[9px] font-black text-gray-400 uppercase tracking-widest mb-2">Ko'rishlar</p>
+                                    <p className="text-xl font-black text-blue-600">{report.viewCount || 0} <span className="text-xs">ta</span></p>
+                                </div>
+                            </div>
+
+                            {/* Order Stats */}
+                            <div className="bg-white p-5 rounded-[2rem] border border-gray-100 shadow-sm">
+                                <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-4">Zakazlar statistikasi</p>
+                                <div className="flex gap-4">
+                                    <div className="flex-1 text-center">
+                                        <p className="text-2xl font-black text-gray-900">{report.completedOrders}</p>
+                                        <p className="text-[9px] font-black text-green-500 uppercase">Bajarilgan</p>
+                                    </div>
+                                    <div className="flex-1 text-center">
+                                        <p className="text-2xl font-black text-gray-900">{report.pendingOrders}</p>
+                                        <p className="text-[9px] font-black text-amber-500 uppercase">Kutilmoqda</p>
+                                    </div>
+                                    <div className="flex-1 text-center">
+                                        <p className="text-2xl font-black text-gray-900">{report.cancelledOrders}</p>
+                                        <p className="text-[9px] font-black text-red-500 uppercase">Bekor</p>
+                                    </div>
+                                </div>
+                            </div>
+
+                            {/* Monthly Breakdown */}
+                            <div className="bg-white p-5 rounded-[2rem] border border-gray-100 shadow-sm">
+                                <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-4">Oylik daromad</p>
+                                <div className="flex flex-col gap-2">
+                                    {report.monthlyData?.map((m, i) => (
+                                        <div key={i} className="flex items-center justify-between">
+                                            <span className="text-xs font-bold text-gray-500 w-20">{m.month}</span>
+                                            <div className="flex-1 mx-3 bg-gray-100 rounded-full h-2 overflow-hidden">
+                                                <div
+                                                    className="h-full bg-primary rounded-full transition-all"
+                                                    style={{ width: `${report.monthlyData.length > 0 ? (m.earned / Math.max(...report.monthlyData.map(x => x.earned), 1)) * 100 : 0}%` }}
+                                                />
+                                            </div>
+                                            <span className="text-xs font-black text-gray-900 w-20 text-right">{m.earned?.toLocaleString()}</span>
+                                        </div>
+                                    ))}
+                                </div>
+                            </div>
+                        </>
+                    )}
+                </div>
+            )}
+
+            {/* Orders Tab */}
+            {activeTab === 'orders' && <div className="px-6 py-6" ref={ordersRef}>
                 <div className="flex justify-between items-center mb-8">
                     <div className="flex flex-col">
                         <h2 className="font-black text-gray-900 text-xl tracking-tight flex items-center gap-3">
@@ -328,7 +430,7 @@ const VendorDashboard = () => {
                         )}
                     </div>
                 )}
-            </div>
+            </div>}
 
             {/* Animation CSS & Bell Shake */}
             <style dangerouslySetInnerHTML={{
@@ -348,8 +450,7 @@ const VendorDashboard = () => {
                     to { transform: scale(1); opacity: 1; }
                 }
                 .animate-scale-in { animation: scaleIn 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275) both; }
-                
-                :root { --primary-rgb: 99, 102, 241; } /* Adaptive for your primary color */
+                :root { --primary-rgb: 99, 102, 241; }
             `}} />
         </div>
     );

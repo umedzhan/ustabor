@@ -23,12 +23,9 @@ const VendorRegister = () => {
     });
 
     const [newService, setNewService] = useState({ name: '', price: '' });
-    const [newImage, setNewImage] = useState('');
-    const [newDoc, setNewDoc] = useState('');
     const [uploadingObj, setUploadingObj] = useState({ state: false, field: null });
 
     useEffect(() => {
-        // Fetch categories for the select dropdown
         const fetchCategories = async () => {
             try {
                 const { data } = await axios.get(`${API_URL}/categories`);
@@ -62,11 +59,10 @@ const VendorRegister = () => {
 
             if (type === 'profilePicture') {
                 setFormData(prev => ({ ...prev, profilePicture: data.url }));
-            } else {
-                setFormData(prev => ({
-                    ...prev,
-                    portfolio: [...prev.portfolio, data.url]
-                }));
+            } else if (type === 'portfolio') {
+                setFormData(prev => ({ ...prev, portfolio: [...prev.portfolio, data.url] }));
+            } else if (type === 'document') {
+                setFormData(prev => ({ ...prev, documents: [...prev.documents, data.url] }));
             }
         } catch (error) {
             console.error("Error uploading image:", error);
@@ -81,16 +77,13 @@ const VendorRegister = () => {
         setLoading(true);
 
         try {
-            // Single token declaration for all requests in this submit block
             const authToken = localStorage.getItem('token');
 
-            // 1. Send /api/user/setup for name and profile picture
             const setupPayload = { name: formData.name, profilePicture: formData.profilePicture };
             await axios.post(`${API_URL}/user/setup`, setupPayload, {
                 headers: { Authorization: `Bearer ${authToken}` }
             });
 
-            // 2. Prepare data according to VendorProfile schema
             const payload = {
                 category: formData.categoryId,
                 location: {
@@ -102,13 +95,11 @@ const VendorRegister = () => {
                 documents: formData.documents
             };
 
-            // Post to backend
             await axios.post(`${API_URL}/vendors`, payload, {
                 headers: { Authorization: `Bearer ${authToken}` }
             });
 
             setSuccess(true);
-            // Fetch updated user from backend to reflect onboarded=true
             const { data: meData } = await axios.get(`${API_URL}/user/me`, {
                 headers: { Authorization: `Bearer ${authToken}` }
             });
@@ -134,36 +125,15 @@ const VendorRegister = () => {
     };
 
     const removeService = (index) => {
-        const updatedServices = formData.services.filter((_, i) => i !== index);
-        setFormData({ ...formData, services: updatedServices });
-    };
-
-    const addImage = () => {
-        if (!newImage) return;
-        setFormData({
-            ...formData,
-            portfolio: [...formData.portfolio, newImage]
-        });
-        setNewImage('');
+        setFormData({ ...formData, services: formData.services.filter((_, i) => i !== index) });
     };
 
     const removeImage = (index) => {
-        const updatedPortfolio = formData.portfolio.filter((_, i) => i !== index);
-        setFormData({ ...formData, portfolio: updatedPortfolio });
-    };
-
-    const addDoc = () => {
-        if (!newDoc) return;
-        setFormData({
-            ...formData,
-            documents: [...formData.documents, newDoc]
-        });
-        setNewDoc('');
+        setFormData({ ...formData, portfolio: formData.portfolio.filter((_, i) => i !== index) });
     };
 
     const removeDoc = (index) => {
-        const updatedDocs = formData.documents.filter((_, i) => i !== index);
-        setFormData({ ...formData, documents: updatedDocs });
+        setFormData({ ...formData, documents: formData.documents.filter((_, i) => i !== index) });
     };
 
     if (success) {
@@ -183,7 +153,7 @@ const VendorRegister = () => {
 
     return (
         <div className="bg-[#f8fafc] min-h-screen pb-12">
-            {/* Premium Header */}
+            {/* Header */}
             <div className="bg-primary text-white pt-10 pb-20 px-6 rounded-b-[3.5rem] shadow-2xl shadow-primary/20 relative overflow-hidden">
                 <div className="absolute top-0 right-0 w-64 h-64 bg-white/10 rounded-full -mr-20 -mt-20 blur-3xl"></div>
                 <div className="absolute top-0 left-0 w-32 h-32 bg-white/5 rounded-full -ml-10 -mt-10 blur-2xl"></div>
@@ -195,7 +165,7 @@ const VendorRegister = () => {
             </div>
 
             <form onSubmit={handleSubmit} className="px-6 -mt-10 relative z-20 flex flex-col gap-6">
-                {/* Step 1: Category & Location */}
+                {/* Step 1: Basic Info */}
                 <div className="bg-white p-6 rounded-[2.5rem] shadow-xl shadow-black/[0.03] border border-gray-50">
                     <div className="flex items-center gap-3 mb-6">
                         <div className="w-10 h-10 bg-primary/10 rounded-2xl flex items-center justify-center text-primary">
@@ -205,19 +175,17 @@ const VendorRegister = () => {
                     </div>
 
                     <div className="space-y-5">
-
-                        {/* Profile Picture Upload */}
+                        {/* Profile Picture */}
                         <div className="flex justify-center mb-4">
                             <div className="relative">
                                 <div className="w-24 h-24 rounded-[1.5rem] bg-gray-50 border-4 border-white shadow-xl flex items-center justify-center overflow-hidden group">
                                     {uploadingObj.state && uploadingObj.field === 'profilePicture' ? (
-                                        <div className="w-6 h-6 border-3 border-primary rounded-full animate-spin border-t-transparent"></div>
+                                        <div className="w-6 h-6 border-2 border-primary rounded-full animate-spin border-t-transparent"></div>
                                     ) : formData.profilePicture ? (
                                         <img src={formData.profilePicture} alt="Profile" className="w-full h-full object-cover" />
                                     ) : (
                                         <User size={32} className="text-gray-300" />
                                     )}
-
                                     <label className="absolute inset-0 bg-black/40 flex flex-col items-center justify-center text-white cursor-pointer opacity-0 group-hover:opacity-100 transition-opacity">
                                         <Camera size={20} className="mb-1" />
                                         <span className="text-[8px] font-black uppercase tracking-widest text-white">Yuklash</span>
@@ -289,7 +257,7 @@ const VendorRegister = () => {
 
                     <div className="space-y-3 mb-6">
                         {formData.services.map((svc, index) => (
-                            <div key={index} className="flex items-center justify-between p-4 bg-gray-50/50 border border-gray-50 rounded-2xl group animate-slide-in">
+                            <div key={index} className="flex items-center justify-between p-4 bg-gray-50/50 border border-gray-50 rounded-2xl">
                                 <div className="flex flex-col">
                                     <span className="font-black text-gray-900 text-sm">{svc.name}</span>
                                     <span className="text-[11px] font-black text-primary uppercase">{svc.price.toLocaleString()} so'm</span>
@@ -348,24 +316,18 @@ const VendorRegister = () => {
                             </div>
                         ))}
                         {formData.portfolio.length < 6 && (
-                            <div className="aspect-square bg-gray-50 border-2 border-dashed border-gray-200 rounded-2xl flex flex-col items-center justify-center text-gray-300">
-                                <ImageIcon size={24} />
-                                <span className="text-[8px] font-black uppercase mt-1">Sizniki</span>
-                            </div>
+                            <label className="aspect-square bg-gray-50 border-2 border-dashed border-gray-200 rounded-2xl flex flex-col items-center justify-center text-gray-300 cursor-pointer hover:border-primary/40 hover:text-primary/40 transition-all">
+                                {uploadingObj.state && uploadingObj.field === 'portfolio' ? (
+                                    <div className="w-5 h-5 border-2 border-primary rounded-full animate-spin border-t-transparent" />
+                                ) : (
+                                    <>
+                                        <Camera size={24} />
+                                        <span className="text-[8px] font-black uppercase mt-1">Yuklash</span>
+                                    </>
+                                )}
+                                <input type="file" className="hidden" accept="image/*" onChange={(e) => handleFileUpload(e, 'portfolio')} disabled={uploadingObj.state} />
+                            </label>
                         )}
-                    </div>
-
-                    <div className="flex gap-2">
-                        <input
-                            type="text"
-                            placeholder="Rasm URL (masalan: unsplash.com/...)"
-                            className="flex-1 bg-gray-50 border border-gray-100 rounded-xl p-3 text-xs font-bold outline-none focus:ring-2 focus:ring-primary/10"
-                            value={newImage}
-                            onChange={(e) => setNewImage(e.target.value)}
-                        />
-                        <button type="button" onClick={addImage} className="w-12 h-12 bg-primary text-white rounded-xl flex items-center justify-center shadow-lg shadow-primary/20 hover:scale-105 transition-all">
-                            <Plus size={20} />
-                        </button>
                     </div>
                 </div>
 
@@ -391,18 +353,13 @@ const VendorRegister = () => {
                         ))}
                     </div>
 
-                    <div className="flex gap-2">
-                        <input
-                            type="text"
-                            placeholder="Hujjat URL manzilini kiriting"
-                            className="flex-1 bg-gray-50 border border-gray-100 rounded-xl p-3 text-xs font-bold outline-none focus:ring-2 focus:ring-primary/10"
-                            value={newDoc}
-                            onChange={(e) => setNewDoc(e.target.value)}
-                        />
-                        <button type="button" onClick={addDoc} className="w-12 h-12 bg-gray-900 text-white rounded-xl flex items-center justify-center shadow-lg hover:scale-105 transition-all">
-                            <Plus size={20} />
-                        </button>
-                    </div>
+                    <label className="flex items-center gap-2 cursor-pointer bg-gray-50 border border-gray-200 rounded-2xl p-3 hover:border-primary/40 transition-all">
+                        <Camera size={16} className="text-primary shrink-0" />
+                        <span className="text-sm font-bold text-gray-600">
+                            {uploadingObj.state && uploadingObj.field === 'document' ? 'Yuklanmoqda...' : 'Hujjat rasmini yuklash'}
+                        </span>
+                        <input type="file" className="hidden" accept="image/*" onChange={(e) => handleFileUpload(e, 'document')} disabled={uploadingObj.state} />
+                    </label>
                 </div>
 
                 <div className="mt-4 px-2">
@@ -417,7 +374,7 @@ const VendorRegister = () => {
                     className="w-full bg-primary text-white font-black py-5 rounded-[2rem] shadow-2xl shadow-primary/30 active:scale-[0.98] transition-all disabled:opacity-50 uppercase tracking-[0.2em] text-sm"
                 >
                     {loading ? (
-                        <div className="w-6 h-6 border-3 border-white rounded-full animate-spin border-t-transparent mx-auto"></div>
+                        <div className="w-6 h-6 border-2 border-white rounded-full animate-spin border-t-transparent mx-auto"></div>
                     ) : (
                         "Arizani yuborish"
                     )}

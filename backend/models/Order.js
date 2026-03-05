@@ -17,7 +17,7 @@ const OrderSchema = new mongoose.Schema({
     paymentMethod: { type: String, enum: ['cash', 'card'], required: true },
     location: {
         type: { type: String, enum: ['Point'], default: 'Point' },
-        coordinates: { type: [Number] }, // [longitude, latitude]
+        coordinates: { type: [Number] },
         address: String
     },
     appointmentTime: { type: Date, required: true },
@@ -25,7 +25,8 @@ const OrderSchema = new mongoose.Schema({
         rating: { type: Number, min: 1, max: 5 },
         comment: { type: String }
     },
-    cancelReason: { type: String }
+    cancelReason: { type: String },
+    chatLocked: { type: Boolean, default: false }  // locked after completion
 }, { timestamps: true });
 
 OrderSchema.index({ location: '2dsphere' });

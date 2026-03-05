@@ -56,11 +56,23 @@ export const AuthProvider = ({ children }) => {
 
     }, []);
 
-    const logout = () => {
-        setToken(null);
-        setUser(null);
-        localStorage.removeItem('token');
-        delete axios.defaults.headers.common['Authorization'];
+    const logout = async () => {
+        try {
+            const currentToken = localStorage.getItem('token');
+            if (currentToken) {
+                // Reset role in DB so user can pick a new role on next login
+                await axios.post(`${API_URL}/auth/logout`, {}, {
+                    headers: { Authorization: `Bearer ${currentToken}` }
+                });
+            }
+        } catch (err) {
+            console.warn('Logout API call failed (non-critical):', err);
+        } finally {
+            setToken(null);
+            setUser(null);
+            localStorage.removeItem('token');
+            delete axios.defaults.headers.common['Authorization'];
+        }
     };
 
     return (

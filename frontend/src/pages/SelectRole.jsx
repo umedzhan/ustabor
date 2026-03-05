@@ -12,9 +12,9 @@ const SelectRole = () => {
     const { setUser, user } = useAuth();
     const [loadingRole, setLoadingRole] = useState(null);
 
-    // If user is already onboarded, redirect them to their home
+    // Redirect only if fully onboarded with an active role
     useEffect(() => {
-        if (user && user.onboarded) {
+        if (user && user.onboarded && user.role && user.role !== 'none') {
             if (user.role === 'admin') navigate('/admin', { replace: true });
             else if (user.role === 'vendor') navigate('/vendor/dashboard', { replace: true });
             else if (user.role === 'client') navigate('/', { replace: true });
@@ -51,13 +51,14 @@ const SelectRole = () => {
             });
             setUser(data.user);
 
-            // If already onboarded, go straight to dashboard
-            if (data.user.onboarded) {
+            // If backend says setup is required for this specific role, go to setup page
+            if (data.requireSetup) {
+                navigate(roleObj.path, { replace: true });
+            } else {
+                // Otherwise go straight to dashboard
                 if (roleObj.id === 'vendor') navigate('/vendor/dashboard', { replace: true });
                 else if (roleObj.id === 'client') navigate('/', { replace: true });
                 else if (roleObj.id === 'admin') navigate('/admin', { replace: true });
-            } else {
-                navigate(roleObj.path, { replace: true });
             }
         } catch (error) {
             console.error('Error setting role:', error);
@@ -66,6 +67,7 @@ const SelectRole = () => {
             setLoadingRole(null);
         }
     };
+
 
 
     return (

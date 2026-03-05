@@ -7,10 +7,10 @@ const Profile = () => {
     const { user, logout } = useAuth();
     const navigate = useNavigate();
 
-    const handleLogout = () => {
-        logout();
-        navigate('/select-role');
+    const handleLogout = async () => {
+        await logout(navigate);
     };
+
 
     if (!user) return null;
 

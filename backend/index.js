@@ -197,9 +197,27 @@ app.post('/api/user/set-role', authMiddleware.verifyToken, async (req, res) => {
         const user = await User.findById(req.user.id);
         if (!user) return res.status(404).json({ error: 'User not found' });
         user.role = role;
-        if (role === 'admin') user.onboarded = true;
+
+        let requireSetup = !user.onboarded;
+
+        if (role === 'admin') {
+            user.onboarded = true;
+            requireSetup = false;
+        } else if (role === 'vendor') {
+            const vendorProfile = await VendorProfile.findOne({ userId: user._id });
+            if (!vendorProfile) {
+                requireSetup = true; // Force setup if no vendor profile exists
+            } else {
+                requireSetup = false; // Already has vendor profile
+                user.onboarded = true;
+            }
+        } else if (role === 'client') {
+            // If they are onboarded as anything, they can act as client immediately
+            requireSetup = !user.onboarded;
+        }
+
         await user.save();
-        res.json({ message: 'Role updated', user });
+        res.json({ message: 'Role updated', user, requireSetup });
     } catch (err) {
         res.status(500).json({ error: 'Failed to set role' });
     }

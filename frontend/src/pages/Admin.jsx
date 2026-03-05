@@ -218,10 +218,11 @@ const Admin = () => {
                         <p className="text-[9px] font-black text-gray-400 uppercase tracking-widest">Admin Panel</p>
                     </div>
                 </div>
-                <button onClick={logout} className="text-[10px] text-red-500 font-black px-3 py-1.5 bg-red-50 rounded-lg uppercase">Chiqish</button>
+                <button onClick={() => logout(navigate)} className="text-[10px] text-red-500 font-black px-3 py-1.5 bg-red-50 rounded-lg uppercase">Chiqish</button>
             </div>
 
             {/* Tab Navigation - Horizontal Scroll */}
+
             <div className="flex gap-2 px-4 py-3 overflow-x-auto no-scrollbar sticky top-[57px] z-20 bg-gray-50 border-b border-gray-100">
                 {TABS.map(tab => (
                     <button

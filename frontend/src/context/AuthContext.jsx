@@ -13,35 +13,43 @@ export const AuthProvider = ({ children }) => {
     useEffect(() => {
         const authenticateWithTelegram = async () => {
             try {
-                // Determine if we are running inside Telegram
                 const initData = WebApp.initData;
                 const tgUser = WebApp.initDataUnsafe?.user;
 
+                let loginData;
+
                 if (initData && tgUser) {
-                    // Send initData to backend for verification and login
+                    // Telegram WebApp login
                     const response = await axios.post(`${API_URL}/auth/telegram`, {
-                        initData: initData,
+                        initData,
                         user: tgUser
                     });
-
-                    const { token, user: dbUser } = response.data;
-                    setToken(token);
-                    setUser(dbUser);
-                    localStorage.setItem('token', token);
-
-                    // Setup Axios default header
-                    axios.defaults.headers.common['Authorization'] = `Bearer ${token}`;
+                    loginData = response.data;
                 } else {
-                    console.log('Not running inside Telegram. Using Dev User login fallback.');
+                    // Dev fallback
                     const response = await axios.get(`${API_URL}/auth/dev-login`);
-                    const { token, user: devUser } = response.data;
-                    setToken(token);
-                    setUser(devUser);
-                    localStorage.setItem('token', token);
-                    axios.defaults.headers.common['Authorization'] = `Bearer ${token}`;
+                    loginData = response.data;
                 }
+
+                const { token: newToken, user: authUser } = loginData;
+
+                // Always fetch fresh user from DB to get latest role/onboarded state
+                const freshUserRes = await axios.get(`${API_URL}/user/me`, {
+                    headers: { Authorization: `Bearer ${newToken}` }
+                });
+                const freshUser = freshUserRes.data.user;
+
+                setToken(newToken);
+                setUser(freshUser);
+                localStorage.setItem('token', newToken);
+                axios.defaults.headers.common['Authorization'] = `Bearer ${newToken}`;
+
             } catch (error) {
                 console.error('Authentication error:', error);
+                // Clear stale token if auth fails
+                localStorage.removeItem('token');
+                setToken(null);
+                setUser(null);
             } finally {
                 setLoading(false);
             }
@@ -49,18 +57,14 @@ export const AuthProvider = ({ children }) => {
 
         authenticateWithTelegram();
 
-        // Setup Telegram WebApp UI options
         WebApp.ready();
         WebApp.expand();
-        // WebApp.setHeaderColor('secondary_bg_color');
-
     }, []);
 
     const logout = async () => {
         try {
             const currentToken = localStorage.getItem('token');
             if (currentToken) {
-                // Reset role in DB so user can pick a new role on next login
                 await axios.post(`${API_URL}/auth/logout`, {}, {
                     headers: { Authorization: `Bearer ${currentToken}` }
                 });
@@ -68,10 +72,13 @@ export const AuthProvider = ({ children }) => {
         } catch (err) {
             console.warn('Logout API call failed (non-critical):', err);
         } finally {
+            // Clear state
             setToken(null);
             setUser(null);
             localStorage.removeItem('token');
             delete axios.defaults.headers.common['Authorization'];
+            // Force full page reload so AuthContext re-runs and fetches fresh user
+            window.location.href = '/select-role';
         }
     };
 

@@ -78,9 +78,10 @@ function AppContent() {
 
           {/* Vendor-specific Routes */}
           <Route path="/vendor/dashboard" element={
-            user && user.role === 'vendor' ? <Dashboard /> : <Navigate to="/vendor/register" replace />
+            user && user.role === 'vendor' ? <Dashboard /> : <Navigate to="/select-role" replace />
           } />
           <Route path="/vendor/profile" element={<RequireOnboarding><ProfileSettings /></RequireOnboarding>} />
+
 
           {/* Shared */}
           <Route path="/select-role" element={<SelectRole />} />

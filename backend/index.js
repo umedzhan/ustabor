@@ -142,13 +142,14 @@ app.post('/api/auth/telegram', async (req, res) => {
     }
 });
 
-// 2. Logout — reset role in DB
+// 2. Logout — reset role in DB (keep onboarded separate per role logic)
 app.post('/api/auth/logout', authMiddleware.verifyToken, async (req, res) => {
     try {
         const user = await User.findById(req.user.id);
         if (user && user.role !== 'admin') {
             user.role = 'none';
-            user.onboarded = false;
+            // Keep onboarded=true so users don't re-register if they switch back to same role
+            // onboarded is per-account, not per-role
             await user.save();
         }
         res.json({ message: 'Logged out successfully' });
@@ -156,6 +157,7 @@ app.post('/api/auth/logout', authMiddleware.verifyToken, async (req, res) => {
         res.status(500).json({ error: 'Logout failed' });
     }
 });
+
 
 // 3. DEV LOGIN
 app.get('/api/auth/dev-login', async (req, res) => {

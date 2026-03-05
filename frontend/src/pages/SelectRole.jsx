@@ -50,7 +50,15 @@ const SelectRole = () => {
                 headers: { Authorization: `Bearer ${token}` }
             });
             setUser(data.user);
-            navigate(roleObj.path);
+
+            // If already onboarded, go straight to dashboard
+            if (data.user.onboarded) {
+                if (roleObj.id === 'vendor') navigate('/vendor/dashboard', { replace: true });
+                else if (roleObj.id === 'client') navigate('/', { replace: true });
+                else if (roleObj.id === 'admin') navigate('/admin', { replace: true });
+            } else {
+                navigate(roleObj.path, { replace: true });
+            }
         } catch (error) {
             console.error('Error setting role:', error);
             alert(t('error'));
@@ -58,6 +66,7 @@ const SelectRole = () => {
             setLoadingRole(null);
         }
     };
+
 
     return (
         <div className="min-h-screen bg-[#f8fafc] flex flex-col items-center justify-center p-6 pb-20 overflow-hidden relative">

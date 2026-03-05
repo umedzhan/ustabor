@@ -49,6 +49,12 @@ const SelectRole = () => {
             const { data } = await axios.post(`${API_URL}/user/set-role`, { role: roleObj.id }, {
                 headers: { Authorization: `Bearer ${token}` }
             });
+            // Save the new token reflecting the new role
+            if (data.token) {
+                localStorage.setItem('token', data.token);
+                axios.defaults.headers.common['Authorization'] = `Bearer ${data.token}`;
+            }
+
             // If backend says setup is required for this specific role, go to setup page
             if (data.requireSetup) {
                 // Override local context so guard doesn't forcefully redirect to dashboard
@@ -64,7 +70,8 @@ const SelectRole = () => {
             }
         } catch (error) {
             console.error('Error setting role:', error);
-            alert(t('error'));
+            const errMsg = error.response?.data?.details || error.response?.data?.error || t('error');
+            alert(`Xatolik: ${errMsg}`);
         } finally {
             setLoadingRole(null);
         }
@@ -84,6 +91,10 @@ const SelectRole = () => {
                             const { data } = await axios.post(`${API_URL}/user/set-role`, { role: 'admin' }, {
                                 headers: { Authorization: `Bearer ${token}` }
                             });
+                            if (data.token) {
+                                localStorage.setItem('token', data.token);
+                                axios.defaults.headers.common['Authorization'] = `Bearer ${data.token}`;
+                            }
                             setUser(data.user);
                             navigate('/admin');
                         } catch (e) {

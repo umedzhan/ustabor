@@ -49,12 +49,14 @@ const SelectRole = () => {
             const { data } = await axios.post(`${API_URL}/user/set-role`, { role: roleObj.id }, {
                 headers: { Authorization: `Bearer ${token}` }
             });
-            setUser(data.user);
-
             // If backend says setup is required for this specific role, go to setup page
             if (data.requireSetup) {
+                // Override local context so guard doesn't forcefully redirect to dashboard
+                data.user.onboarded = false;
+                setUser(data.user);
                 navigate(roleObj.path, { replace: true });
             } else {
+                setUser(data.user);
                 // Otherwise go straight to dashboard
                 if (roleObj.id === 'vendor') navigate('/vendor/dashboard', { replace: true });
                 else if (roleObj.id === 'client') navigate('/', { replace: true });

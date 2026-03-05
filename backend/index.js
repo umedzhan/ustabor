@@ -219,9 +219,10 @@ app.post('/api/user/set-role', authMiddleware.verifyToken, async (req, res) => {
         await user.save();
         res.json({ message: 'Role updated', user, requireSetup });
     } catch (err) {
-        res.status(500).json({ error: 'Failed to set role' });
+        res.status(500).json({ error: 'Failed to set role', details: err.message, stack: err.stack });
     }
 });
+
 
 app.post('/api/user/setup', authMiddleware.verifyToken, async (req, res) => {
     try {

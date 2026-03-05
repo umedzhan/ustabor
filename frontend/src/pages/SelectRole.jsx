@@ -63,10 +63,6 @@ const SelectRole = () => {
                 navigate(roleObj.path, { replace: true });
             } else {
                 setUser(data.user);
-                // Otherwise go straight to dashboard
-                if (roleObj.id === 'vendor') navigate('/vendor/dashboard', { replace: true });
-                else if (roleObj.id === 'client') navigate('/', { replace: true });
-                else if (roleObj.id === 'admin') navigate('/admin', { replace: true });
             }
         } catch (error) {
             console.error('Error setting role:', error);
@@ -96,7 +92,6 @@ const SelectRole = () => {
                                 axios.defaults.headers.common['Authorization'] = `Bearer ${data.token}`;
                             }
                             setUser(data.user);
-                            navigate('/admin');
                         } catch (e) {
                             alert("Xatolik yuz berdi");
                         }

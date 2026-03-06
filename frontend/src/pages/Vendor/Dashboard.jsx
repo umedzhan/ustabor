@@ -4,7 +4,7 @@ import {
     Wallet, Bell, Clock, CheckCircle, XCircle,
     LayoutDashboard, Settings, Star, MapPin,
     MessageSquare, ChevronRight, Zap, TrendingUp,
-    AlertCircle, Sparkles, Eye, BarChart2, FileText
+    AlertCircle, Sparkles, Eye, BarChart2, FileText, ArrowLeft
 } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
 import { useLanguage } from '../../context/LanguageContext';
@@ -12,7 +12,7 @@ import axios from 'axios';
 import { API_URL } from '../../config';
 
 const VendorDashboard = () => {
-    const { user } = useAuth();
+    const { user, logout } = useAuth();
     const { t } = useLanguage();
     const navigate = useNavigate();
     const [orders, setOrders] = useState([]);
@@ -112,6 +112,12 @@ const VendorDashboard = () => {
                 <div className="absolute -bottom-20 -left-20 w-60 h-60 bg-white/5 rounded-full blur-[80px]"></div>
 
                 <div className="flex justify-between items-center mb-10 relative z-10">
+                    <button
+                        onClick={() => logout(navigate)}
+                        className="absolute -top-6 left-0 bg-white/10 backdrop-blur-md px-3 py-1.5 rounded-xl border border-white/20 text-[10px] font-black uppercase tracking-widest flex items-center gap-1 text-white hover:bg-white/20 transition-all"
+                    >
+                        <ArrowLeft size={12} /> {t('back')}
+                    </button>
                     <div className="flex items-center gap-5">
                         <div className="relative">
                             <div className="w-16 h-16 bg-white/20 backdrop-blur-xl rounded-[1.8rem] border border-white/30 p-1 shadow-2xl overflow-hidden group">

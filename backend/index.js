@@ -146,7 +146,7 @@ app.post('/api/auth/telegram', async (req, res) => {
 app.post('/api/auth/logout', authMiddleware.verifyToken, async (req, res) => {
     try {
         const user = await User.findById(req.user.id);
-        if (user && user.role !== 'admin') {
+        if (user) {
             user.role = 'none';
             // Keep onboarded=true so users don't re-register if they switch back to same role
             // onboarded is per-account, not per-role

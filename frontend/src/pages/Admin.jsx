@@ -8,7 +8,7 @@ import {
     LayoutDashboard, Users, ClipboardList, MessageSquare,
     Settings, BarChart2, Megaphone, UserPlus, Shield,
     ShieldAlert, Trash2, Edit, Check, X, Eye, ChevronRight,
-    TrendingUp, DollarSign, Star, Upload
+    TrendingUp, DollarSign, Star, Upload, ArrowLeft
 } from 'lucide-react';
 
 const Admin = () => {
@@ -218,7 +218,10 @@ const Admin = () => {
                         <p className="text-[9px] font-black text-gray-400 uppercase tracking-widest">Admin Panel</p>
                     </div>
                 </div>
-                <button onClick={() => logout(navigate)} className="text-[10px] text-red-500 font-black px-3 py-1.5 bg-red-50 rounded-lg uppercase">Chiqish</button>
+                <button onClick={() => logout(navigate)} className="text-[10px] text-red-500 font-black px-3 py-1.5 bg-red-50 rounded-lg uppercase flex items-center gap-1">
+                    <ArrowLeft size={12} />
+                    Chiqish
+                </button>
             </div>
 
             {/* Tab Navigation - Horizontal Scroll */}

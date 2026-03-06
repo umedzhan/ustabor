@@ -17,6 +17,7 @@ const ProfileSettings = () => {
     const [loading, setLoading] = useState(true);
     const [saving, setSaving] = useState(false);
     const [statusMessage, setStatusMessage] = useState({ type: '', text: '' });
+    const [categories, setCategories] = useState([]);
 
     const [formData, setFormData] = useState({
         location: '',
@@ -27,7 +28,8 @@ const ProfileSettings = () => {
         services: [],
         profilePicture: '',
         portfolio: [],
-        isOnline: false
+        isOnline: false,
+        categoryId: ''
     });
 
     const [newService, setNewService] = useState({ name: '', price: '' });
@@ -39,9 +41,13 @@ const ProfileSettings = () => {
         const fetchProfile = async () => {
             try {
                 const token = localStorage.getItem('token');
-                const { data } = await axios.get(`${API_URL}/vendor/profile`, {
-                    headers: { Authorization: `Bearer ${token}` }
-                });
+                const [profileRes, categoriesRes] = await Promise.all([
+                    axios.get(`${API_URL}/vendor/profile`, { headers: { Authorization: `Bearer ${token}` } }),
+                    axios.get(`${API_URL}/categories`)
+                ]);
+
+                setCategories(categoriesRes.data);
+                const data = profileRes.data;
 
                 setFormData({
                     location: data.location?.address || '',
@@ -52,7 +58,8 @@ const ProfileSettings = () => {
                     services: data.services || [],
                     profilePicture: data.profilePicture || '',
                     portfolio: data.portfolio || [],
-                    isOnline: data.isOnline || false
+                    isOnline: data.isOnline || false,
+                    categoryId: data.category?._id || data.category || (categoriesRes.data.length > 0 ? categoriesRes.data[0]._id : '')
                 });
             } catch (error) {
                 console.error("Error fetching profile", error);
@@ -118,7 +125,8 @@ const ProfileSettings = () => {
                 workingHours: formData.workingHours,
                 services: formData.services,
                 portfolio: formData.portfolio,
-                isOnline: formData.isOnline
+                isOnline: formData.isOnline,
+                category: formData.categoryId
             };
 
             await axios.put(`${API_URL}/vendor/profile`, payload, {
@@ -276,6 +284,24 @@ const ProfileSettings = () => {
                         </div>
 
                         <div className="space-y-5">
+                            <div className="group">
+                                <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest ml-1 mb-2 block group-focus-within:text-primary transition-colors">Sohangiz (Kategoriya)</label>
+                                <div className="relative">
+                                    <Briefcase className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-300 group-focus-within:text-primary transition-colors" size={18} />
+                                    <select
+                                        className="w-full bg-gray-50 border border-gray-100 rounded-2xl p-4 pl-12 text-sm font-bold text-gray-800 outline-none focus:ring-4 focus:ring-primary/10 transition-all appearance-none"
+                                        value={formData.categoryId}
+                                        onChange={(e) => setFormData({ ...formData, categoryId: e.target.value })}
+                                        required
+                                    >
+                                        <option value="" disabled>Turkum tanlang</option>
+                                        {categories.map(cat => (
+                                            <option key={cat._id} value={cat._id}>{cat.name}</option>
+                                        ))}
+                                    </select>
+                                </div>
+                            </div>
+
                             <div className="group">
                                 <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest ml-1 mb-2 block group-focus-within:text-primary transition-colors">{t('location')}</label>
                                 <div className="relative">

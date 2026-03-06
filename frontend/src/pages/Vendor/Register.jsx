@@ -16,13 +16,9 @@ const VendorRegister = () => {
         name: '',
         profilePicture: '',
         categoryId: '',
-        location: '',
-        services: [],
-        portfolio: [],
-        documents: []
+        location: ''
     });
 
-    const [newService, setNewService] = useState({ name: '', price: '' });
     const [uploadingObj, setUploadingObj] = useState({ state: false, field: null });
 
     useEffect(() => {
@@ -59,10 +55,6 @@ const VendorRegister = () => {
 
             if (type === 'profilePicture') {
                 setFormData(prev => ({ ...prev, profilePicture: data.url }));
-            } else if (type === 'portfolio') {
-                setFormData(prev => ({ ...prev, portfolio: [...prev.portfolio, data.url] }));
-            } else if (type === 'document') {
-                setFormData(prev => ({ ...prev, documents: [...prev.documents, data.url] }));
             }
         } catch (error) {
             console.error("Error uploading image:", error);
@@ -85,14 +77,7 @@ const VendorRegister = () => {
             });
 
             const payload = {
-                category: formData.categoryId,
-                location: {
-                    address: formData.location,
-                    coordinates: [0, 0]
-                },
-                services: formData.services,
-                portfolio: formData.portfolio,
-                documents: formData.documents
+                category: formData.categoryId
             };
 
             await axios.post(`${API_URL}/vendors`, payload, {
@@ -115,26 +100,7 @@ const VendorRegister = () => {
         }
     };
 
-    const addService = () => {
-        if (!newService.name || !newService.price) return;
-        setFormData({
-            ...formData,
-            services: [...formData.services, { name: newService.name, price: Number(newService.price) }]
-        });
-        setNewService({ name: '', price: '' });
-    };
 
-    const removeService = (index) => {
-        setFormData({ ...formData, services: formData.services.filter((_, i) => i !== index) });
-    };
-
-    const removeImage = (index) => {
-        setFormData({ ...formData, portfolio: formData.portfolio.filter((_, i) => i !== index) });
-    };
-
-    const removeDoc = (index) => {
-        setFormData({ ...formData, documents: formData.documents.filter((_, i) => i !== index) });
-    };
 
     if (success) {
         return (
@@ -228,138 +194,7 @@ const VendorRegister = () => {
                                 </div>
                             </div>
                         </div>
-
-                        <div>
-                            <label className="text-[10px] font-black text-gray-400 uppercase tracking-[0.15em] ml-1 mb-2 block">Xizmat ko'rsatish manzili</label>
-                            <div className="relative">
-                                <input
-                                    type="text"
-                                    placeholder="Toshkent, Yunusobod..."
-                                    className="w-full bg-gray-50 border border-gray-100 rounded-2xl p-4 text-sm font-bold text-gray-800 outline-none focus:ring-4 focus:ring-primary/10 transition-all pr-12"
-                                    value={formData.location}
-                                    onChange={(e) => setFormData({ ...formData, location: e.target.value })}
-                                    required
-                                />
-                                <MapPin size={18} className="absolute right-4 top-1/2 -translate-y-1/2 text-primary" />
-                            </div>
-                        </div>
                     </div>
-                </div>
-
-                {/* Step 2: Services */}
-                <div className="bg-white p-6 rounded-[2.5rem] shadow-xl shadow-black/[0.03] border border-gray-50">
-                    <div className="flex items-center gap-3 mb-6">
-                        <div className="w-10 h-10 bg-blue-50 rounded-2xl flex items-center justify-center text-blue-500">
-                            <Briefcase size={20} />
-                        </div>
-                        <h2 className="font-black text-gray-900 tracking-tight">Xizmatlar & Narxlar</h2>
-                    </div>
-
-                    <div className="space-y-3 mb-6">
-                        {formData.services.map((svc, index) => (
-                            <div key={index} className="flex items-center justify-between p-4 bg-gray-50/50 border border-gray-50 rounded-2xl">
-                                <div className="flex flex-col">
-                                    <span className="font-black text-gray-900 text-sm">{svc.name}</span>
-                                    <span className="text-[11px] font-black text-primary uppercase">{svc.price.toLocaleString()} so'm</span>
-                                </div>
-                                <button type="button" onClick={() => removeService(index)} className="w-10 h-10 bg-red-50 text-red-500 rounded-xl flex items-center justify-center hover:bg-red-100 transition-colors">
-                                    <Trash2 size={16} />
-                                </button>
-                            </div>
-                        ))}
-                    </div>
-
-                    <div className="p-5 bg-gray-50 rounded-[2rem] border border-gray-100/50">
-                        <div className="space-y-3 mb-4">
-                            <input
-                                type="text"
-                                placeholder="Xizmat nomi (masalan: Kran o'rnatish)"
-                                className="w-full bg-white border border-gray-100 rounded-xl p-3 text-xs font-bold outline-none focus:ring-2 focus:ring-primary/10"
-                                value={newService.name}
-                                onChange={(e) => setNewService({ ...newService, name: e.target.value })}
-                            />
-                            <input
-                                type="number"
-                                placeholder="Narxi (so'm)"
-                                className="w-full bg-white border border-gray-100 rounded-xl p-3 text-xs font-bold outline-none focus:ring-2 focus:ring-primary/10"
-                                value={newService.price}
-                                onChange={(e) => setNewService({ ...newService, price: e.target.value })}
-                            />
-                        </div>
-                        <button
-                            type="button"
-                            onClick={addService}
-                            disabled={!newService.name || !newService.price}
-                            className="w-full py-3 bg-white text-primary text-[10px] font-black rounded-xl border border-primary/20 flex items-center justify-center gap-2 hover:bg-primary hover:text-white transition-all disabled:opacity-30 uppercase tracking-[0.1em]"
-                        >
-                            <Plus size={14} /> Xizmatni qo'shish
-                        </button>
-                    </div>
-                </div>
-
-                {/* Step 3: Portfolio */}
-                <div className="bg-white p-6 rounded-[2.5rem] shadow-xl shadow-black/[0.03] border border-gray-50">
-                    <div className="flex items-center gap-3 mb-6">
-                        <div className="w-10 h-10 bg-amber-50 rounded-2xl flex items-center justify-center text-amber-500">
-                            <ImageIcon size={20} />
-                        </div>
-                        <h2 className="font-black text-gray-900 tracking-tight">Portfolio</h2>
-                    </div>
-
-                    <div className="grid grid-cols-3 gap-3 mb-6">
-                        {formData.portfolio.map((img, index) => (
-                            <div key={index} className="relative aspect-square rounded-2xl overflow-hidden border-2 border-gray-50 ring-4 ring-gray-50/30 group">
-                                <img src={img} alt="portfolio" className="w-full h-full object-cover" />
-                                <button type="button" onClick={() => removeImage(index)} className="absolute inset-0 bg-red-500/80 flex items-center justify-center text-white opacity-0 group-hover:opacity-100 transition-opacity">
-                                    <Trash2 size={20} />
-                                </button>
-                            </div>
-                        ))}
-                        {formData.portfolio.length < 6 && (
-                            <label className="aspect-square bg-gray-50 border-2 border-dashed border-gray-200 rounded-2xl flex flex-col items-center justify-center text-gray-300 cursor-pointer hover:border-primary/40 hover:text-primary/40 transition-all">
-                                {uploadingObj.state && uploadingObj.field === 'portfolio' ? (
-                                    <div className="w-5 h-5 border-2 border-primary rounded-full animate-spin border-t-transparent" />
-                                ) : (
-                                    <>
-                                        <Camera size={24} />
-                                        <span className="text-[8px] font-black uppercase mt-1">Yuklash</span>
-                                    </>
-                                )}
-                                <input type="file" className="hidden" accept="image/*" onChange={(e) => handleFileUpload(e, 'portfolio')} disabled={uploadingObj.state} />
-                            </label>
-                        )}
-                    </div>
-                </div>
-
-                {/* Step 4: Verification */}
-                <div className="bg-white p-6 rounded-[2.5rem] shadow-xl shadow-black/[0.03] border border-gray-50">
-                    <div className="flex items-center gap-3 mb-2">
-                        <div className="w-10 h-10 bg-green-50 rounded-2xl flex items-center justify-center text-green-500">
-                            <CheckCircle size={20} />
-                        </div>
-                        <h2 className="font-black text-gray-900 tracking-tight">Tasdiqlash</h2>
-                    </div>
-                    <p className="text-[10px] text-gray-400 font-bold uppercase tracking-wider mb-6 ml-1">Sertifikat yoki pasport nusxasi</p>
-
-                    <div className="space-y-2 mb-6 text-left">
-                        {formData.documents.map((doc, index) => (
-                            <div key={index} className="flex items-center gap-3 p-3 bg-green-50/50 border border-green-100 rounded-xl">
-                                <CheckCircle size={14} className="text-green-500" />
-                                <span className="text-[10px] font-bold text-green-700 truncate flex-1">{doc}</span>
-                                <button type="button" onClick={() => removeDoc(index)} className="text-red-400">
-                                    <Trash2 size={12} />
-                                </button>
-                            </div>
-                        ))}
-                    </div>
-
-                    <label className="flex items-center gap-2 cursor-pointer bg-gray-50 border border-gray-200 rounded-2xl p-3 hover:border-primary/40 transition-all">
-                        <Camera size={16} className="text-primary shrink-0" />
-                        <span className="text-sm font-bold text-gray-600">
-                            {uploadingObj.state && uploadingObj.field === 'document' ? 'Yuklanmoqda...' : 'Hujjat rasmini yuklash'}
-                        </span>
-                        <input type="file" className="hidden" accept="image/*" onChange={(e) => handleFileUpload(e, 'document')} disabled={uploadingObj.state} />
-                    </label>
                 </div>
 
                 <div className="mt-4 px-2">
@@ -370,7 +205,7 @@ const VendorRegister = () => {
 
                 <button
                     type="submit"
-                    disabled={loading || uploadingObj.state || !formData.name || !formData.categoryId || formData.services.length === 0}
+                    disabled={loading || uploadingObj.state || !formData.name || !formData.categoryId}
                     className="w-full bg-primary text-white font-black py-5 rounded-[2rem] shadow-2xl shadow-primary/30 active:scale-[0.98] transition-all disabled:opacity-50 uppercase tracking-[0.2em] text-sm"
                 >
                     {loading ? (

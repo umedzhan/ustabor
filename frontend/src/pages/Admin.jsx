@@ -189,9 +189,9 @@ const Admin = () => {
     }
 
     return (
-        <div className="flex bg-[#F8FAFC] min-h-screen text-gray-900">
+        <div className="flex bg-[#F8FAFC] h-screen w-full text-gray-900 overflow-hidden">
             {/* Desktop Sidebar */}
-            <div className="hidden md:block">
+            <div className="hidden md:block h-full">
                 <AdminSidebar
                     activeTab={activeTab}
                     setActiveTab={setActiveTab}
@@ -201,8 +201,8 @@ const Admin = () => {
                 />
             </div>
 
-            <div className="flex-1 flex flex-col min-w-0 overflow-hidden">
-                <header className="h-20 bg-white border-b border-gray-100 flex items-center justify-between px-8 sticky top-0 z-40 shadow-sm">
+            <div className="flex-1 flex flex-col min-w-0 h-full overflow-hidden relative">
+                <header className="h-20 bg-white border-b border-gray-100 flex items-center justify-between px-4 md:px-8 sticky top-0 flex-shrink-0 z-40 shadow-sm">
                     <div className="flex items-center gap-4 flex-1">
                         <div className="relative w-full max-w-md hidden sm:block">
                             <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 w-4 h-4" />
@@ -272,7 +272,7 @@ const Admin = () => {
                     </div>
                 </header>
 
-                <main className="flex-1 overflow-y-auto p-8 no-scrollbar">
+                <main className="flex-1 overflow-y-auto p-4 md:p-8 no-scrollbar pb-32">
                     <div className="max-w-[1400px] mx-auto">
                         {activeTab === 'dashboard' && stats && (
                             <div className="flex flex-col gap-8 animate-in fade-in slide-in-from-bottom-4 duration-500">
@@ -370,8 +370,8 @@ const Admin = () => {
                         {activeTab === 'transactions' && (
                             <div className="flex flex-col gap-8 animate-in fade-in slide-in-from-bottom-4 duration-500">
                                 <h2 className="text-3xl font-black text-gray-900 tracking-tight">Tranzaksiyalar</h2>
-                                <div className="bg-white rounded-[3rem] border border-gray-100 shadow-sm overflow-hidden">
-                                    <table className="w-full text-left">
+                                <div className="bg-white rounded-[3rem] border border-gray-100 shadow-sm overflow-x-auto">
+                                    <table className="w-full text-left min-w-[600px]">
                                         <thead>
                                             <tr className="bg-gray-50/50 border-b border-gray-100">
                                                 <th className="px-8 py-5 text-[10px] font-black text-gray-400 uppercase tracking-widest">Foydalanuvchi</th>
@@ -453,8 +453,8 @@ const Admin = () => {
                         {activeTab === 'logs' && (
                             <div className="flex flex-col gap-8 animate-in fade-in slide-in-from-bottom-4 duration-500">
                                 <h2 className="text-3xl font-black text-gray-900 tracking-tight">Activity Logs</h2>
-                                <div className="bg-white rounded-[3rem] border border-gray-100 shadow-sm overflow-hidden">
-                                    <table className="w-full text-left">
+                                <div className="bg-white rounded-[3rem] border border-gray-100 shadow-sm overflow-x-auto">
+                                    <table className="w-full text-left min-w-[600px]">
                                         <thead>
                                             <tr className="bg-gray-50/50 border-b border-gray-100">
                                                 <th className="px-8 py-5 text-[10px] font-black text-gray-400 uppercase tracking-widest">Admin</th>

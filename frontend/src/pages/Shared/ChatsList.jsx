@@ -16,7 +16,8 @@ const ChatsList = () => {
     const fetchChats = async () => {
         try {
             const token = localStorage.getItem('token');
-            const { data } = await axios.get(`${API_URL}/orders`, {
+            const endpoint = user?.role === 'vendor' ? `${API_URL}/vendor/orders` : `${API_URL}/orders`;
+            const { data } = await axios.get(endpoint, {
                 headers: { Authorization: `Bearer ${token}` }
             });
             setChats(data);

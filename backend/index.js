@@ -685,10 +685,26 @@ app.post('/api/chat/:orderId/send', authMiddleware.verifyToken, async (req, res)
 
         if (recipientTgId) {
             const botDeepLink = `https://t.me/${process.env.BOT_USERNAME || 'ustabor_bot'}?start=${req.params.orderId}`;
+
+            // Helper to escape HTML characters
+            const escapeHTML = str => str.replace(/[&<>'"]/g,
+                tag => ({
+                    '&': '&amp;',
+                    '<': '&lt;',
+                    '>': '&gt;',
+                    "'": '&#39;',
+                    '"': '&quot;'
+                }[tag] || tag)
+            );
+
+            const safeName = escapeHTML(senderName || 'Foydalanuvchi');
+            const safeMsg = escapeHTML(filtered.substring(0, 100) + (filtered.length > 100 ? '...' : ''));
+
             await sendBotMessage(
                 recipientTgId,
-                `💬 *${senderName || 'Foydalanuvchi'}* xabar yozdi:\n\n"${filtered.substring(0, 100)}${filtered.length > 100 ? '...' : ''}"\n\nJavob yozish uchun ilovani oching.`,
+                `💬 <b>${safeName}</b> xabar yozdi:\n\n"${safeMsg}"\n\nJavob yozish uchun ilovani oching.`,
                 {
+                    parse_mode: 'HTML',
                     reply_markup: {
                         inline_keyboard: [
                             [{ text: '✉️ Xabarni o\'qish', web_app: { url: `${process.env.FRONTEND_URL}/chat/${req.params.orderId}` } }],

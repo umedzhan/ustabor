@@ -55,6 +55,10 @@ const Admin = () => {
     // Reports
     const [reportData, setReportData] = useState(null);
 
+    // Transactions
+    const [transactions, setTransactions] = useState([]);
+    const [transactionFilter, setTransactionFilter] = useState('all');
+
     // Categories
     const [categories, setCategories] = useState([]);
     const [newCategory, setNewCategory] = useState({ name: '', icon: 'Zap' });
@@ -75,60 +79,69 @@ const Admin = () => {
         if (tab) setActiveTab(tab);
     }, [location]);
 
-    const fetchAll = useCallback(async () => {
+    const fetchDashboardInfo = useCallback(async () => {
         if (!token || user?.role !== 'admin') return;
         try {
-            const [statsRes, usersRes, pendingRes, allVendorsRes, ordersRes, chatsRes, settingsRes, staffRes, reportRes, categoriesRes, transactionsRes, logsRes] = await Promise.all([
+            const [statsRes, pendingRes] = await Promise.all([
                 axios.get(`${API_URL}/admin/stats`, { headers }),
-                axios.get(`${API_URL}/admin/users`, { headers }),
-                axios.get(`${API_URL}/admin/vendors?status=pending`, { headers }),
-                axios.get(`${API_URL}/admin/vendors`, { headers }),
-                axios.get(`${API_URL}/admin/orders`, { headers }),
-                axios.get(`${API_URL}/admin/chats`, { headers }),
-                axios.get(`${API_URL}/admin/settings`, { headers }),
-                axios.get(`${API_URL}/admin/staff`, { headers }),
-                axios.get(`${API_URL}/admin/reports`, { headers }),
-                axios.get(`${API_URL}/admin/categories`, { headers }), // Protected admin endpoint
-                axios.get(`${API_URL}/admin/transactions`, { headers }),
-                axios.get(`${API_URL}/admin/logs`, { headers }),
+                axios.get(`${API_URL}/admin/vendors?status=pending`, { headers })
             ]);
             setStats(statsRes.data);
-            setUsers(usersRes.data);
             setPendingVendors(pendingRes.data);
-            setAllVendors(allVendorsRes.data);
-            setOrders(ordersRes.data);
-            setChats(chatsRes.data);
-            setSettings(settingsRes.data);
-            setStaffList(staffRes.data);
-            setReportData(reportRes.data);
-            setCategories(categoriesRes.data);
-            setTransactions(transactionsRes.data);
-            setActivityLogs(logsRes.data);
-        } catch (err) {
-            console.error('Admin fetch error:', err);
-        }
+        } catch (err) { console.error('Dashboard fetch error:', err); }
     }, [token, user]);
 
-    useEffect(() => { fetchAll(); }, [fetchAll]);
+    const fetchTabInfo = useCallback(async () => {
+        if (!token || user?.role !== 'admin') return;
+        try {
+            if (activeTab === 'users') {
+                const { data } = await axios.get(`${API_URL}/admin/users`, { headers });
+                setUsers(data);
+            } else if (activeTab === 'moderation') {
+                const { data } = await axios.get(`${API_URL}/admin/vendors?status=pending`, { headers });
+                setPendingVendors(data);
+            } else if (activeTab === 'categories') {
+                const { data } = await axios.get(`${API_URL}/admin/categories`, { headers });
+                setCategories(data);
+            } else if (activeTab === 'transactions') {
+                const { data } = await axios.get(`${API_URL}/admin/transactions`, { headers });
+                setTransactions(data);
+            } else if (activeTab === 'logs') {
+                const { data } = await axios.get(`${API_URL}/admin/logs`, { headers });
+                setActivityLogs(data);
+            }
+        } catch (err) {
+            console.error('Tab fetch error:', err);
+        }
+    }, [activeTab, token, user]);
+
+    useEffect(() => {
+        fetchDashboardInfo();
+    }, [fetchDashboardInfo]);
+
+    useEffect(() => {
+        fetchTabInfo();
+    }, [fetchTabInfo]);
 
     // Moderation
     const handleVerify = async (vendorId, status) => {
         await axios.put(`${API_URL}/admin/vendors/${vendorId}/verify`, { status }, { headers });
-        fetchAll();
+        fetchTabInfo();
+        fetchDashboardInfo();
     };
 
     // User actions
     const handleDeleteUser = async (id) => {
         if (!window.confirm('O\'chirmoqchimisiz?')) return;
         await axios.delete(`${API_URL}/admin/users/${id}`, { headers });
-        fetchAll();
+        fetchTabInfo();
     };
 
     const handleUpdateUser = async () => {
         if (!editingUser) return;
         await axios.put(`${API_URL}/admin/users/${editingUser._id}`, editingUser, { headers });
         setEditingUser(null);
-        fetchAll();
+        fetchTabInfo();
     };
 
     // Category actions
@@ -137,23 +150,23 @@ const Admin = () => {
         try {
             await axios.post(`${API_URL}/admin/categories`, newCategory, { headers });
             setNewCategory({ name: '', icon: 'Zap' });
-            fetchAll();
+            fetchTabInfo();
         } catch (err) {
-            alert('Xatolik!');
+            alert('Xatolik');
         }
     };
 
     const handleDeleteCategory = async (id) => {
         if (!window.confirm('Kategoriyani o\'chirmoqchimisiz?')) return;
         await axios.delete(`${API_URL}/admin/categories/${id}`, { headers });
-        fetchAll();
+        fetchTabInfo();
     };
 
     // Transaction actions
     const handleUpdateTransactionStatus = async (id, status) => {
         try {
             await axios.put(`${API_URL}/admin/transactions/${id}/status`, { status }, { headers });
-            fetchAll();
+            fetchTabInfo();
         } catch (err) {
             alert('Xatolik!');
         }
@@ -189,9 +202,9 @@ const Admin = () => {
     }
 
     return (
-        <div className="flex bg-[#F8FAFC] h-screen w-full text-gray-900 overflow-hidden">
+        <div className="flex bg-[#F8FAFC] min-h-[100dvh] w-full text-gray-900 overflow-hidden">
             {/* Desktop Sidebar */}
-            <div className="hidden md:block h-full">
+            <div className="hidden md:block h-screen sticky top-0">
                 <AdminSidebar
                     activeTab={activeTab}
                     setActiveTab={setActiveTab}
@@ -201,7 +214,7 @@ const Admin = () => {
                 />
             </div>
 
-            <div className="flex-1 flex flex-col min-w-0 h-full overflow-hidden relative">
+            <div className="flex-1 flex flex-col min-w-0 h-[100dvh] overflow-y-auto overflow-x-hidden relative">
                 <header className="h-20 bg-white border-b border-gray-100 flex items-center justify-between px-4 md:px-8 sticky top-0 flex-shrink-0 z-40 shadow-sm">
                     <div className="flex items-center gap-4 flex-1">
                         <div className="relative w-full max-w-md hidden sm:block">
@@ -272,7 +285,7 @@ const Admin = () => {
                     </div>
                 </header>
 
-                <main className="flex-1 overflow-y-auto p-4 md:p-8 no-scrollbar pb-32">
+                <main className="flex-1 p-4 md:p-8 pb-32">
                     <div className="max-w-[1400px] mx-auto">
                         {activeTab === 'dashboard' && stats && (
                             <div className="flex flex-col gap-8 animate-in fade-in slide-in-from-bottom-4 duration-500">
@@ -436,17 +449,22 @@ const Admin = () => {
                             <div className="flex flex-col gap-8 animate-in fade-in slide-in-from-bottom-4 duration-500">
                                 <h2 className="text-3xl font-black text-gray-900 tracking-tight">Moderatsiya</h2>
                                 {pendingVendors.map(v => (
-                                    <div key={v._id} className="bg-white p-8 rounded-[3rem] border border-gray-100 shadow-sm flex justify-between items-center">
+                                    <div key={v._id} className="bg-white p-6 md:p-8 rounded-[2rem] md:rounded-[3rem] border border-gray-100 shadow-sm flex flex-col sm:flex-row justify-between sm:items-center gap-4">
                                         <div>
-                                            <p className="font-black text-xl">{v.userId?.name}</p>
-                                            <p className="text-primary font-bold text-xs uppercase">{v.category?.name}</p>
+                                            <p className="font-black text-xl md:text-2xl">{v.userId?.name}</p>
+                                            <p className="text-primary font-bold text-xs uppercase tracking-widest">{v.category?.name}</p>
                                         </div>
-                                        <div className="flex gap-4">
-                                            <button onClick={() => handleVerify(v._id, 'approved')} className="bg-emerald-500 text-white px-6 py-2 rounded-xl font-bold">Tasdiqlash</button>
-                                            <button onClick={() => handleVerify(v._id, 'rejected')} className="bg-red-50 text-red-500 px-6 py-2 rounded-xl font-bold">Rad etish</button>
+                                        <div className="flex gap-2 w-full sm:w-auto mt-2 sm:mt-0">
+                                            <button onClick={() => handleVerify(v._id, 'approved')} className="flex-1 sm:flex-none bg-emerald-500 text-white px-4 md:px-6 py-3 rounded-xl font-bold hover:bg-emerald-600 transition-colors shadow-lg shadow-emerald-500/20">Tasdiqlash</button>
+                                            <button onClick={() => handleVerify(v._id, 'rejected')} className="flex-1 sm:flex-none bg-red-50 text-red-500 px-4 md:px-6 py-3 rounded-xl font-bold hover:bg-red-100 transition-colors">Rad etish</button>
                                         </div>
                                     </div>
                                 ))}
+                                {pendingVendors.length === 0 && (
+                                    <div className="bg-white p-10 rounded-[3rem] text-center w-full border border-gray-100/50 shadow-sm">
+                                        <p className="text-gray-400 font-bold tracking-tight">Hozircha tekshiriladigan arizalar yo'q.</p>
+                                    </div>
+                                )}
                             </div>
                         )}
 

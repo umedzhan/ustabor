@@ -59,9 +59,13 @@ const Admin = () => {
     const [categories, setCategories] = useState([]);
     const [newCategory, setNewCategory] = useState({ name: '', icon: 'Zap' });
 
-    // Transactions
-    const [transactions, setTransactions] = useState([]);
-    const [transactionFilter, setTransactionFilter] = useState('all');
+    // Activity Logs
+    const [activityLogs, setActivityLogs] = useState([]);
+
+    // Search
+    const [searchTerm, setSearchTerm] = useState('');
+    const [searchResults, setSearchResults] = useState(null);
+    const [isSearching, setIsSearching] = useState(false);
 
     const headers = { Authorization: `Bearer ${token}` };
 
@@ -74,7 +78,7 @@ const Admin = () => {
     const fetchAll = useCallback(async () => {
         if (!token || user?.role !== 'admin') return;
         try {
-            const [statsRes, usersRes, pendingRes, allVendorsRes, ordersRes, chatsRes, settingsRes, staffRes, reportRes, categoriesRes, transactionsRes] = await Promise.all([
+            const [statsRes, usersRes, pendingRes, allVendorsRes, ordersRes, chatsRes, settingsRes, staffRes, reportRes, categoriesRes, transactionsRes, logsRes] = await Promise.all([
                 axios.get(`${API_URL}/admin/stats`, { headers }),
                 axios.get(`${API_URL}/admin/users`, { headers }),
                 axios.get(`${API_URL}/admin/vendors?status=pending`, { headers }),
@@ -84,8 +88,9 @@ const Admin = () => {
                 axios.get(`${API_URL}/admin/settings`, { headers }),
                 axios.get(`${API_URL}/admin/staff`, { headers }),
                 axios.get(`${API_URL}/admin/reports`, { headers }),
-                axios.get(`${API_URL}/admin/categories`, { headers: { ...headers, Authorization: undefined } }), // Public but admin can manage
+                axios.get(`${API_URL}/admin/categories`, { headers }), // Protected admin endpoint
                 axios.get(`${API_URL}/admin/transactions`, { headers }),
+                axios.get(`${API_URL}/admin/logs`, { headers }),
             ]);
             setStats(statsRes.data);
             setUsers(usersRes.data);
@@ -98,6 +103,7 @@ const Admin = () => {
             setReportData(reportRes.data);
             setCategories(categoriesRes.data);
             setTransactions(transactionsRes.data);
+            setActivityLogs(logsRes.data);
         } catch (err) {
             console.error('Admin fetch error:', err);
         }
@@ -153,6 +159,24 @@ const Admin = () => {
         }
     };
 
+    // Search handler
+    const handleGlobalSearch = async (val) => {
+        setSearchTerm(val);
+        if (val.length < 2) {
+            setSearchResults(null);
+            return;
+        }
+        setIsSearching(true);
+        try {
+            const { data } = await axios.get(`${API_URL}/admin/search?q=${val}`, { headers });
+            setSearchResults(data);
+        } catch (err) {
+            console.error('Search error:', err);
+        } finally {
+            setIsSearching(false);
+        }
+    };
+
     if (!user || user.role !== 'admin') {
         return (
             <div className="p-10 flex flex-col items-center justify-center min-h-[80vh] text-center">
@@ -184,9 +208,47 @@ const Admin = () => {
                             <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 w-4 h-4" />
                             <input
                                 type="text"
+                                value={searchTerm}
+                                onChange={(e) => handleGlobalSearch(e.target.value)}
                                 placeholder="Foydalanuvchi, buyurtma yoki xizmat qidirish..."
                                 className="w-full bg-gray-50 border border-gray-100 rounded-2xl py-2.5 pl-11 pr-4 text-sm focus:outline-none focus:ring-2 focus:ring-primary/20 transition-all font-medium"
                             />
+
+                            {/* Search Results Dropdown */}
+                            {searchResults && (
+                                <div className="absolute top-full mt-2 left-0 w-full bg-white rounded-3xl border border-gray-100 shadow-2xl z-50 overflow-hidden animate-in fade-in slide-in-from-top-2">
+                                    <div className="p-4 max-h-[400px] overflow-y-auto no-scrollbar">
+                                        {Object.entries(searchResults).some(([_, arr]) => arr.length > 0) ? (
+                                            <div className="flex flex-col gap-4">
+                                                {searchResults.users.length > 0 && (
+                                                    <div>
+                                                        <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-2 px-2">Foydalanuvchilar</p>
+                                                        {searchResults.users.map(u => (
+                                                            <div key={u._id} onClick={() => { setActiveTab('users'); setSearchResults(null); }} className="p-3 hover:bg-gray-50 rounded-2xl cursor-pointer flex items-center justify-between">
+                                                                <span className="text-sm font-bold">{u.name}</span>
+                                                                <span className="text-[9px] font-black uppercase text-primary bg-primary/10 px-2 py-0.5 rounded-lg">{u.role}</span>
+                                                            </div>
+                                                        ))}
+                                                    </div>
+                                                )}
+                                                {searchResults.vendors.length > 0 && (
+                                                    <div>
+                                                        <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-2 px-2">Ustalar</p>
+                                                        {searchResults.vendors.map(v => (
+                                                            <div key={v._id} onClick={() => { setActiveTab('moderation'); setSearchResults(null); }} className="p-3 hover:bg-gray-50 rounded-2xl cursor-pointer">
+                                                                <span className="text-sm font-bold">{v.userId?.name}</span>
+                                                                <p className="text-[10px] text-gray-400 truncate">{v.bio}</p>
+                                                            </div>
+                                                        ))}
+                                                    </div>
+                                                )}
+                                            </div>
+                                        ) : (
+                                            <p className="text-center text-sm text-gray-400 py-4">Natija topilmadi</p>
+                                        )}
+                                    </div>
+                                </div>
+                            )}
                         </div>
                     </div>
 
@@ -385,6 +447,47 @@ const Admin = () => {
                                         </div>
                                     </div>
                                 ))}
+                            </div>
+                        )}
+
+                        {activeTab === 'logs' && (
+                            <div className="flex flex-col gap-8 animate-in fade-in slide-in-from-bottom-4 duration-500">
+                                <h2 className="text-3xl font-black text-gray-900 tracking-tight">Activity Logs</h2>
+                                <div className="bg-white rounded-[3rem] border border-gray-100 shadow-sm overflow-hidden">
+                                    <table className="w-full text-left">
+                                        <thead>
+                                            <tr className="bg-gray-50/50 border-b border-gray-100">
+                                                <th className="px-8 py-5 text-[10px] font-black text-gray-400 uppercase tracking-widest">Admin</th>
+                                                <th className="px-8 py-5 text-[10px] font-black text-gray-400 uppercase tracking-widest">Harakat</th>
+                                                <th className="px-8 py-5 text-[10px] font-black text-gray-400 uppercase tracking-widest">Obyekt</th>
+                                                <th className="px-8 py-5 text-[10px] font-black text-gray-400 uppercase tracking-widest">Vaqt</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody className="divide-y divide-gray-50">
+                                            {activityLogs.map(log => (
+                                                <tr key={log._id}>
+                                                    <td className="px-8 py-5">
+                                                        <div className="flex items-center gap-3">
+                                                            <div className="w-8 h-8 rounded-lg bg-primary/10 flex items-center justify-center text-primary text-xs font-black">
+                                                                {log.adminId?.name?.charAt(0)}
+                                                            </div>
+                                                            <span className="text-sm font-black text-gray-900">{log.adminId?.name}</span>
+                                                        </div>
+                                                    </td>
+                                                    <td className="px-8 py-5">
+                                                        <span className="text-xs font-bold px-3 py-1 bg-gray-100 rounded-lg text-gray-600 uppercase tracking-tighter">
+                                                            {log.action}
+                                                        </span>
+                                                    </td>
+                                                    <td className="px-8 py-5 text-sm font-medium text-gray-500">{log.targetName}</td>
+                                                    <td className="px-8 py-5 text-[11px] font-bold text-gray-400 whitespace-nowrap">
+                                                        {new Date(log.createdAt).toLocaleString()}
+                                                    </td>
+                                                </tr>
+                                            ))}
+                                        </tbody>
+                                    </table>
+                                </div>
                             </div>
                         )}
 

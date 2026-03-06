@@ -11,6 +11,7 @@ import ProfileSettings from './pages/Vendor/ProfileSettings';
 import Admin from './pages/Admin';
 import Onboarding from './pages/Onboarding';
 import Profile from './pages/Profile';
+import SelectRole from './pages/SelectRole';
 import ChatsList from './pages/Shared/ChatsList';
 import BottomNav from './components/BottomNav';
 import { useAuth } from './context/AuthContext';

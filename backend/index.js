@@ -11,6 +11,16 @@ const User = require('./models/User');
 const VendorProfile = require('./models/VendorProfile');
 const Order = require('./models/Order');
 const Message = require('./models/Message');
+const ActivityLog = require('./models/ActivityLog');
+
+// Helper for Admin Logs
+const logActivity = async (adminId, action, targetId, targetName, details = '') => {
+    try {
+        await ActivityLog.create({ adminId, action, targetId, targetName, details });
+    } catch (err) {
+        console.error('Log error:', err);
+    }
+};
 const Settings = require('./models/Settings');
 
 const authMiddleware = require('./middleware/auth');
@@ -833,6 +843,7 @@ app.put('/api/admin/users/:id', verifyAdmin, async (req, res) => {
             { new: true }
         );
         if (!user) return res.status(404).json({ error: 'User not found' });
+        await logActivity(req.user._id, 'update_user', user._id, user.name);
         res.json({ message: 'User updated', user });
     } catch (err) {
         res.status(500).json({ error: 'Failed to update user' });
@@ -842,8 +853,9 @@ app.put('/api/admin/users/:id', verifyAdmin, async (req, res) => {
 // Admin: Delete user
 app.delete('/api/admin/users/:id', verifyAdmin, async (req, res) => {
     try {
-        await User.findByIdAndDelete(req.params.id);
+        const user = await User.findByIdAndDelete(req.params.id);
         await VendorProfile.findOneAndDelete({ userId: req.params.id });
+        if (user) await logActivity(req.user._id, 'delete_user', user._id, user.name);
         res.json({ message: 'User deleted' });
     } catch (err) {
         res.status(500).json({ error: 'Failed to delete user' });
@@ -956,6 +968,7 @@ app.put('/api/admin/vendors/:id/verify', verifyAdmin, async (req, res) => {
             ? "✅ Tabriklaymiz! Sizning usta profilingiz tasdiqlandi. Endi siz buyurtmalarni qabul qilishingiz mumkin."
             : "❌ Afsuski, sizning usta profilingiz rad etildi. Iltimos, ma'lumotlarni tekshirib qayta urinib ko'ring.";
         await sendBotMessage(vendor.userId?.telegramId, msg);
+        await logActivity(req.user._id, 'verify_vendor', vendor._id, vendor.userId?.name, `Status: ${status}`);
 
         res.json({ message: `Vendor status updated to ${status}`, vendor });
     } catch (err) {
@@ -1134,8 +1147,56 @@ app.delete('/api/admin/categories/:id', verifyAdmin, async (req, res) => {
     }
 });
 
+app.get('/api/admin/categories', verifyAdmin, async (req, res) => {
+    try {
+        const categories = await Category.find().sort({ name: 1 });
+        res.json(categories);
+    } catch (err) {
+        res.status(500).json({ error: 'Failed to fetch categories' });
+    }
+});
+
 // ==========================================================
 // SERVER
 // ==========================================================
+// Admin: Global Search
+app.get('/api/admin/search', verifyAdmin, async (req, res) => {
+    try {
+        const { q } = req.query;
+        if (!q) return res.json({ users: [], orders: [], vendors: [] });
+
+        const regex = new RegExp(q, 'i');
+
+        const [users, vendors, orders] = await Promise.all([
+            User.find({ $or: [{ name: regex }, { phone: regex }] }).limit(10),
+            VendorProfile.find().populate('userId').then(vps =>
+                vps.filter(v => v.userId?.name.match(regex) || v.bio?.match(regex)).slice(0, 10)
+            ),
+            Order.find().populate('clientId').then(os =>
+                os.filter(o => o.clientId?.name.match(regex) || o.serviceDetails?.name.match(regex)).slice(0, 10)
+            )
+        ]);
+
+        res.json({ users, vendors, orders });
+    } catch (err) {
+        res.status(500).json({ error: 'Search failed' });
+    }
+});
+
+// Admin: Get Activity Logs
+app.get('/api/admin/logs', verifyAdmin, async (req, res) => {
+    try {
+        const logs = await ActivityLog.find()
+            .populate('adminId', 'name')
+            .sort({ createdAt: -1 })
+            .limit(100);
+        res.json(logs);
+    } catch (err) {
+        res.status(500).json({ error: 'Failed to fetch logs' });
+    }
+});
+
 const PORT = process.env.PORT || 5000;
-app.listen(PORT, () => console.log(`Server running on port ${PORT}`));
+app.listen(PORT, () => {
+    console.log(`Server running on port ${PORT}`);
+});

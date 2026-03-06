@@ -19,6 +19,7 @@ const AdminSidebar = ({ activeTab, setActiveTab, logout, isCollapsed, setIsColla
         { id: 'chats', label: 'Chatlar', icon: MessageSquare },
         { id: 'reports', label: 'Hisobotlar', icon: BarChart2 },
         { id: 'broadcast', label: 'Broadcast', icon: Megaphone },
+        { id: 'logs', label: 'Activity Logs', icon: ClipboardList },
         { id: 'staff', label: 'Xodimlar', icon: Shield },
         { id: 'settings', label: 'Sozlamalar', icon: Settings },
     ];
@@ -43,8 +44,8 @@ const AdminSidebar = ({ activeTab, setActiveTab, logout, isCollapsed, setIsColla
                         key={item.id}
                         onClick={() => setActiveTab(item.id)}
                         className={`group flex items-center gap-3 p-3.5 rounded-2xl transition-all relative ${activeTab === item.id
-                                ? 'bg-primary text-white shadow-xl shadow-primary/20 scale-[1.02]'
-                                : 'text-gray-400 hover:bg-gray-50 hover:text-gray-900'
+                            ? 'bg-primary text-white shadow-xl shadow-primary/20 scale-[1.02]'
+                            : 'text-gray-400 hover:bg-gray-50 hover:text-gray-900'
                             }`}
                         title={isCollapsed ? item.label : ''}
                     >

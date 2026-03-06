@@ -27,6 +27,12 @@ export const translations = {
         broadcast: "Broadcast",
         asosiy: "Asosiy",
         panel: "Panel",
+        muloqotlar: "Muloqotlar",
+        barcha_chatlar: "Barcha chatlar",
+        chatlar_yoq: "Hozircha chatlar yo'q",
+        chatlar_yoq_sub: "Buyurtma bering va usta bilan bu yerda bog'laning",
+        yangi_xabar: "Yangi xabar!",
+        unread_messages: "o'qilmagan xabarlar",
 
         // Role Selection
         welcome: "Xush kelibsiz!",
@@ -166,6 +172,12 @@ export const translations = {
         broadcast: "Рассылка",
         asosiy: "Главная",
         panel: "Панель",
+        muloqotlar: "Общение",
+        barcha_chatlar: "Все чаты",
+        chatlar_yoq: "Пока чатов нет",
+        chatlar_yoq_sub: "Сделайте заказ и свяжитесь с мастером здесь",
+        yangi_xabar: "Новое сообщение!",
+        unread_messages: "непрочитанных сообщений",
 
         // Role Selection
         welcome: "Добро пожаловать!",

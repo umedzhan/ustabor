@@ -10,14 +10,28 @@ if (BOT_TOKEN) {
     // ==================== /start ====================
     bot.start(async (ctx) => {
         const startPayload = ctx.payload;
-        const welcomeMsg = startPayload
-            ? `Xush kelibsiz! Siz quyidagi usta sahifasiga tashrif buyurdingiz.`
-            : `🏠 Xush kelibsiz *Ustabor*ga!\n\nProfessional ustalar bilan bog'laning. Mini App-ni ochish uchun tugmani bosing.`;
+        let welcomeMsg = `🏠 Xush kelibsiz *Ustabor*ga!\n\nProfessional ustalar bilan bog'laning. Mini App-ni ochish uchun tugmani bosing.`;
+        let webAppUrl = process.env.FRONTEND_URL;
+
+        if (startPayload) {
+            // Check if it's an order ID (chat deep link) or vendor ID
+            // For now, if payload exists, we adapt the greeting
+            welcomeMsg = `🏠 Xush kelibsiz! So'rov bo'yicha ilovani ochish uchun quyidagi tugmani bosing.`;
+
+            // If it looks like a chat link (we can use a prefix or just try to be smart)
+            // Let's assume for now that direct payload = potential chat or vendor
+            if (startPayload.length === 24) {
+                webAppUrl = `${process.env.FRONTEND_URL}/chat/${startPayload}`;
+                welcomeMsg = `💬 Yangi xabar! Chatni ochish uchun quyidagi tugmani bosing.`;
+            } else {
+                webAppUrl = `${process.env.FRONTEND_URL}/vendor/${startPayload}`;
+            }
+        }
 
         await ctx.replyWithMarkdown(welcomeMsg, {
             reply_markup: {
                 inline_keyboard: [
-                    [{ text: '🚀 Mini App-ni ochish', web_app: { url: startPayload ? `${process.env.FRONTEND_URL}/vendor/${startPayload}` : process.env.FRONTEND_URL } }]
+                    [{ text: startPayload ? '🚀 Ilovani ochish' : '🚀 Mini App-ni ochish', web_app: { url: webAppUrl } }]
                 ]
             }
         });

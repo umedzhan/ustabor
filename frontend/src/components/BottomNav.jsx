@@ -4,9 +4,33 @@ import { Home, ClipboardList, Megaphone, Settings, LayoutDashboard, CheckCircle,
 import { useAuth } from '../context/AuthContext';
 import { useLanguage } from '../context/LanguageContext';
 
+import { useState, useEffect } from 'react';
+import axios from 'axios';
+import { API_URL } from '../config';
+
 const BottomNav = () => {
     const { user } = useAuth();
     const { t } = useLanguage();
+    const [unreadCount, setUnreadCount] = useState(0);
+
+    const fetchUnreadCount = async () => {
+        if (!user) return;
+        try {
+            const token = localStorage.getItem('token');
+            const { data } = await axios.get(`${API_URL}/notifications/unread-count`, {
+                headers: { Authorization: `Bearer ${token}` }
+            });
+            setUnreadCount(data.count || 0);
+        } catch (error) {
+            console.error("Error fetching unread count", error);
+        }
+    };
+
+    useEffect(() => {
+        fetchUnreadCount();
+        const interval = setInterval(fetchUnreadCount, 10000); // 10s
+        return () => clearInterval(interval);
+    }, [user]);
 
     if (!user || (user && !user.onboarded && user.role !== 'admin')) return null;
 
@@ -49,6 +73,15 @@ const BottomNav = () => {
                         <Clock size={24} />
                         <span className="text-[10px] font-bold">{t('orders')}</span>
                     </NavLink>
+                    <NavLink to="/chats" className={({ isActive }) => `relative flex flex-col items-center gap-1 p-2 ${isActive ? 'text-primary' : 'text-gray-400'}`}>
+                        <MessageCircle size={24} />
+                        <span className="text-[10px] font-bold">{t('chat')}</span>
+                        {unreadCount > 0 && (
+                            <span className="absolute top-1 right-2 bg-red-500 text-white text-[8px] font-black w-4 h-4 rounded-full flex items-center justify-center border-2 border-white shadow-sm">
+                                {unreadCount > 9 ? '9+' : unreadCount}
+                            </span>
+                        )}
+                    </NavLink>
                     <NavLink to="/profile" className={({ isActive }) => `flex flex-col items-center gap-1 p-2 ${isActive ? 'text-primary' : 'text-gray-400'}`}>
                         <User size={24} />
                         <span className="text-[10px] font-bold">Profil</span>
@@ -68,9 +101,14 @@ const BottomNav = () => {
                     <Clock size={24} />
                     <span className="text-[10px] font-bold">{t('orders')}</span>
                 </NavLink>
-                <NavLink to="/chats" className={({ isActive }) => `flex flex-col items-center gap-1 p-2 ${isActive ? 'text-primary' : 'text-gray-400'}`}>
+                <NavLink to="/chats" className={({ isActive }) => `relative flex flex-col items-center gap-1 p-2 ${isActive ? 'text-primary' : 'text-gray-400'}`}>
                     <MessageCircle size={24} />
                     <span className="text-[10px] font-bold">{t('chat')}</span>
+                    {unreadCount > 0 && (
+                        <span className="absolute top-1 right-2 bg-red-500 text-white text-[8px] font-black w-4 h-4 rounded-full flex items-center justify-center border-2 border-white shadow-sm">
+                            {unreadCount > 9 ? '9+' : unreadCount}
+                        </span>
+                    )}
                 </NavLink>
                 <NavLink to="/profile" className={({ isActive }) => `flex flex-col items-center gap-1 p-2 ${isActive ? 'text-primary' : 'text-gray-400'}`}>
                     <User size={24} />

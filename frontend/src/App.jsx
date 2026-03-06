@@ -11,7 +11,7 @@ import ProfileSettings from './pages/Vendor/ProfileSettings';
 import Admin from './pages/Admin';
 import Onboarding from './pages/Onboarding';
 import Profile from './pages/Profile';
-import SelectRole from './pages/SelectRole';
+import ChatsList from './pages/Shared/ChatsList';
 import BottomNav from './components/BottomNav';
 import { useAuth } from './context/AuthContext';
 import { LanguageProvider } from './context/LanguageContext';
@@ -73,7 +73,7 @@ function AppContent() {
           <Route path="/vendor/:id/book" element={<RequireOnboarding><OrderFlow /></RequireOnboarding>} />
           <Route path="/orders" element={<RequireOnboarding><Orders /></RequireOnboarding>} />
           <Route path="/chat/:id" element={<RequireOnboarding><Chat /></RequireOnboarding>} />
-          <Route path="/chats" element={<RequireOnboarding><div className="p-10 text-center">Chatlar ro'yxati (Tez kunda)</div></RequireOnboarding>} />
+          <Route path="/chats" element={<RequireOnboarding><ChatsList /></RequireOnboarding>} />
           <Route path="/profile" element={<RequireOnboarding><Profile /></RequireOnboarding>} />
 
           {/* Vendor-specific Routes */}

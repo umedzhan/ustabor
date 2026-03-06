@@ -80,11 +80,11 @@ function filterSensitiveInfo(text) {
 // ---------------------------------------------------------
 // HELPER: Send bot notification safely
 // ---------------------------------------------------------
-async function sendBotMessage(telegramId, message) {
+async function sendBotMessage(telegramId, message, extra = {}) {
     try {
         const bot = require('./bot/index');
         if (bot && telegramId) {
-            await bot.telegram.sendMessage(telegramId, message);
+            await bot.telegram.sendMessage(telegramId, message, { parse_mode: 'Markdown', ...extra });
         }
     } catch (e) {
         console.error('Bot message failed:', e.message);
@@ -594,9 +594,40 @@ app.get('/api/chat/:orderId/messages', authMiddleware.verifyToken, async (req, r
             .populate('senderId', 'name role')
             .sort({ createdAt: 1 });
 
+        // Mark messages as read for the receiver
+        await Message.updateMany(
+            { orderId: req.params.orderId, senderId: { $ne: req.user.id }, status: 'unread' },
+            { $set: { status: 'read' } }
+        );
+
         res.json({ messages, chatLocked: order.chatLocked });
     } catch (err) {
         res.status(500).json({ error: 'Xabarlarni yuklashda xatolik' });
+    }
+});
+
+// Get unread messages count for the logged-in user
+app.get('/api/notifications/unread-count', authMiddleware.verifyToken, async (req, res) => {
+    try {
+        // Find all orders where user is client or vendor
+        const orders = await Order.find({
+            $or: [
+                { clientId: req.user.id },
+                { 'vendorId.userId': req.user.id }
+            ]
+        }).select('_id');
+
+        const orderIds = orders.map(o => o._id);
+
+        const unreadCount = await Message.countDocuments({
+            orderId: { $in: orderIds },
+            senderId: { $ne: req.user.id },
+            status: 'unread'
+        });
+
+        res.json({ count: unreadCount });
+    } catch (err) {
+        res.status(500).json({ error: 'Unread count error' });
     }
 });
 
@@ -642,10 +673,21 @@ app.post('/api/chat/:orderId/send', authMiddleware.verifyToken, async (req, res)
             : order.clientId?.telegramId;
         const senderName = senderIsClient ? order.clientId?.name : order.vendorId?.userId?.name;
 
-        await sendBotMessage(
-            recipientTgId,
-            `💬 ${senderName || 'Foydalanuvchi'} xabar yozdi:\n"${filtered.substring(0, 100)}${filtered.length > 100 ? '...' : ''}"\n\nO'qish uchun ilovani oching.`
-        );
+        if (recipientTgId) {
+            const botDeepLink = `https://t.me/${process.env.BOT_USERNAME || 'ustabor_bot'}?start=${req.params.orderId}`;
+            await sendBotMessage(
+                recipientTgId,
+                `💬 *${senderName || 'Foydalanuvchi'}* xabar yozdi:\n\n"${filtered.substring(0, 100)}${filtered.length > 100 ? '...' : ''}"\n\nJavob yozish uchun ilovani oching.`,
+                {
+                    reply_markup: {
+                        inline_keyboard: [
+                            [{ text: '✉️ Xabarni o\'qish', web_app: { url: `${process.env.FRONTEND_URL}/chat/${req.params.orderId}` } }],
+                            [{ text: '🤖 Botda ochish', url: botDeepLink }]
+                        ]
+                    }
+                }
+            );
+        }
 
         res.status(201).json({ message, wasFiltered });
     } catch (err) {
@@ -1017,6 +1059,78 @@ app.post('/api/admin/upload-logo', verifyAdmin, upload.single('image'), (req, re
         res.json({ url: fileUrl });
     } catch (err) {
         res.status(500).json({ error: 'Logo yuklashda xatolik' });
+    }
+});
+
+// Admin: Transactions History
+const Transaction = require('./models/Transaction');
+app.get('/api/admin/transactions', verifyAdmin, async (req, res) => {
+    try {
+        const { type, status } = req.query;
+        let query = {};
+        if (type) query.type = type;
+        if (status) query.status = status;
+        const transactions = await Transaction.find(query)
+            .populate('userId', 'name role phone')
+            .sort({ createdAt: -1 })
+            .limit(100);
+        res.json(transactions);
+    } catch (err) {
+        res.status(500).json({ error: 'Failed to get transactions' });
+    }
+});
+
+// Admin: Update Transaction Status (e.g. payout approval)
+app.put('/api/admin/transactions/:id/status', verifyAdmin, async (req, res) => {
+    try {
+        const { status } = req.body;
+        const transaction = await Transaction.findById(req.params.id).populate('userId');
+        if (!transaction) return res.status(404).json({ error: 'Transaction not found' });
+
+        transaction.status = status;
+        await transaction.save();
+
+        // Notify user via bot
+        if (transaction.userId?.telegramId) {
+            const msg = status === 'completed'
+                ? `✅ Sizning ${transaction.amount.toLocaleString()} so'mlik to'lov so'rovingiz tasdiqlandi!`
+                : `❌ Sizning ${transaction.amount.toLocaleString()} so'mlik to'lov so'rovingiz rad etildi.`;
+            await sendBotMessage(transaction.userId.telegramId, msg);
+        }
+
+        res.json({ message: 'Transaction status updated', transaction });
+    } catch (err) {
+        res.status(500).json({ error: 'Failed to update transaction status' });
+    }
+});
+
+// Admin: Category CRUD
+app.post('/api/admin/categories', verifyAdmin, async (req, res) => {
+    try {
+        const { name, icon } = req.body;
+        const category = new Category({ name, icon });
+        await category.save();
+        res.status(201).json(category);
+    } catch (err) {
+        res.status(500).json({ error: 'Failed to create category' });
+    }
+});
+
+app.put('/api/admin/categories/:id', verifyAdmin, async (req, res) => {
+    try {
+        const category = await Category.findByIdAndUpdate(req.params.id, req.body, { new: true });
+        res.json(category);
+    } catch (err) {
+        res.status(500).json({ error: 'Failed to update category' });
+    }
+});
+
+app.delete('/api/admin/categories/:id', verifyAdmin, async (req, res) => {
+    try {
+        await Category.findByIdAndDelete(req.params.id);
+        res.json({ message: 'Category deleted' });
+    } catch (err) {
+        res.status(500).json({ error: 'Failed to delete category' });
     }
 });
 

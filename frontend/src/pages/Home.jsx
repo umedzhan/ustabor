@@ -8,7 +8,7 @@ const Home = () => {
     const [searchQuery, setSearchQuery] = useState('');
 
     return (
-        <div className="flex flex-col gap-6 pt-4 px-4 bg-white min-h-screen">
+        <div className="flex flex-col gap-6 pt-4 px-4 pb-32 bg-white min-h-screen">
             <Header searchQuery={searchQuery} setSearchQuery={setSearchQuery} />
             <CategoryList onSelect={setSelectedCategory} selected={selectedCategory} />
             <ProfessionalList categoryFilter={selectedCategory} searchQuery={searchQuery} />

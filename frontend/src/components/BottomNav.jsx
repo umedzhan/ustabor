@@ -1,5 +1,5 @@
 import React from 'react';
-import { NavLink } from 'react-router-dom';
+import { NavLink, useLocation } from 'react-router-dom';
 import { Home, ClipboardList, Megaphone, Settings, LayoutDashboard, CheckCircle, Wallet, User, Clock, MessageCircle } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { useLanguage } from '../context/LanguageContext';
@@ -12,6 +12,7 @@ const BottomNav = () => {
     const { user } = useAuth();
     const { t } = useLanguage();
     const [unreadCount, setUnreadCount] = useState(0);
+    const location = useLocation();
 
     const fetchUnreadCount = async () => {
         if (!user) return;
@@ -33,6 +34,9 @@ const BottomNav = () => {
     }, [user]);
 
     if (!user || (user && !user.onboarded && user.role !== 'admin')) return null;
+
+    // Chat sahifasida bottom menu ko'rsatilmaydi (input qisma qoplanmasligi uchun)
+    if (location.pathname.startsWith('/chat/')) return null;
 
     const renderNavItems = () => {
         if (user.role === 'admin') {

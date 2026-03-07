@@ -118,7 +118,7 @@ const VendorRegister = () => {
     }
 
     return (
-        <div className="bg-[#f8fafc] min-h-screen pb-12">
+        <div className="bg-[#f8fafc] min-h-screen pb-32">
             {/* Header */}
             <div className="bg-primary text-white pt-10 pb-20 px-6 rounded-b-[3.5rem] shadow-2xl shadow-primary/20 relative overflow-hidden">
                 <div className="absolute top-0 right-0 w-64 h-64 bg-white/10 rounded-full -mr-20 -mt-20 blur-3xl"></div>

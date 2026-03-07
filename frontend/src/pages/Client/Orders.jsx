@@ -53,7 +53,7 @@ const Orders = () => {
     };
 
     return (
-        <div className="bg-gray-50 min-h-screen pb-24">
+        <div className="bg-gray-50 min-h-screen pb-32">
             {/* Header */}
             <div className="bg-white px-4 py-4 flex items-center border-b border-gray-100 sticky top-0 z-10">
                 <button onClick={() => navigate(-1)} className="p-2 -ml-2 rounded-full hover:bg-gray-100">
